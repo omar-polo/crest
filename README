@@ -1,0 +1,80 @@
+CREST
+=====
+
+cREST is a simple cli to tests REST endpoints, it depends on libcurl
+and is released under the OpenBSD license (ISC basically.)
+
+
+Building
+--------
+
+Make sure you have libcurl installed (you may need a libcurl
+dev/devel/develop package) and execute `make'.  You should find the
+`crest' executable.
+
+AFAIK it should build on every (reasonably recent) POSIX-conforming OS where libcurl and asprintf(3) are available.
+
+
+Usage
+-----
+
+By executing `./crest' you should get a prompt `> '.  The syntax for the
+REPL is quite simple: every command is either a help request, a pipe
+or a request.
+
+The syntax for the request is: ``VERB URL PAYLOAD'' where the verb is
+an HTTP method (the case doesn't matter) like GET or POST (or HEAD, PUT,
+...), the url is (unsurprisingly) the url and the payload is optional.
+
+The pipes are special commands used to ``pipe'' the last received response
+to a command.  The syntax is `|cmd', where `cmd' is a sh(1) command.
+The given command will be exec'd as ``/bin/sh -c cmd'' and its stdin
+will be the last received HTTP response.
+
+An help request is either `help' or `usage' and all they do is print a
+brief usage.
+
+
+Flags
+-----
+
+To avoid typing the whole URL every time, cREST supports the `-h'
+flag to set a prefix.  During the session it is used, every URL will
+be prefixed with that prefix.  For example, let's say that we execute
+`./crest -h example.com', then we run at the repl `get user/5'.  The URL
+of the request will be the prefix + / + the url given in the command,
+that is `example.com/user/5'.
+
+The `-v' flag increase the verbosity.  Can be provided more than once.
+
+The `-i' flag disables the verification of the TLS cert used by the
+server.
+
+
+TIPS
+----
+
+If you're working with some json api, make sure to try jid[1].  It's
+glorious to do `get some/endp' and inspecting the response with
+`|jid'.  The whole idea of the pipe was implemented just to do this.
+
+To save the last body use `|cat > path/to/file.json'.
+
+Works really well inside acme(1).
+
+1: https://github.com/simeji/jid
+
+
+TODOs
+-----
+
+ - [ ] implement the code for CONNECT, DELETE, OPTIONS, PATCH
+       PUT & TRACE.
+ - [ ] flag to define headers
+ - [ ] flag to choose the default HTTP version
+ - [ ] flag (or something else) to hide/blacklist some/all response
+       header
+ - [ ] `set' command to change some parameters at runtime
+ - [ ] `add'/`del' command (or better terms?) to add/delete custom
+       HTTP headers
+ - [ ] cookie support? not so sure about this.
