@@ -57,10 +57,23 @@ static char *
 do_url(const struct cmd *cmd)
 {
 	char *u;
-	if (asprintf(&u, "%s/%s", host, cmd->path))
-		return u;
-	warn("asprintf");
-	return NULL;
+	int l;
+
+	/* strlen(prefix) >= 1 by main() */
+
+	if (*cmd->path == '/' && prefix[strlen(prefix) - 1] == '/')
+		l = asprintf(&u, "%s%s", prefix, cmd->path + 1);
+	else if (*cmd->path == '/' || prefix[strlen(prefix) - 1] == '/')
+		l = asprintf(&u, "%s%s", prefix, cmd->path);
+	else
+		l = asprintf(&u, "%s/%s", prefix, cmd->path);
+
+	if (l == -1) {
+		warn("asprintf");
+		return NULL;
+	}
+
+	return u;
 }
 
 int
@@ -71,6 +84,9 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	char *url;
 	int r;
 	struct write_result res;
+
+	*rets = NULL;
+	*retl = 0;
 
 	if ((url = do_url(cmd)) == NULL)
 		return 0;
@@ -102,6 +118,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	case TRACE:
 	default:
 		warnx("method %s not (yet) supported", method2str(cmd->method));
+		free(url);
 		return 0;
 	}
 
@@ -111,6 +128,9 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, fwrite);
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, stdout);
 	curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, http_version);
+
+	if (port != -1)
+		curl_easy_setopt(curl, CURLOPT_PORT, port);
 
 	if (skip_peer_verification)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -132,6 +152,9 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write_res);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
+
+	if (headers != NULL)
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 	code = curl_easy_perform(curl);
 
