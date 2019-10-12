@@ -82,8 +82,13 @@ repl()
 			continue;
 		}
 
-		if (!parse(line, &cmd))
+		if (!parse(line, &cmd)) {
+			if (cmd.path != NULL)
+				free(cmd.path);
+			if (cmd.payload != NULL)
+				free(cmd.payload);
 			continue;
+		}
 
 		if (verbose > 2)
 			warnx("{ method=%d, path=%s, payload=%s }", cmd.method,
