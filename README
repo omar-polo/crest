@@ -19,9 +19,9 @@ where libcurl and asprintf(3) are available.
 Usage
 -----
 
-By executing `./crest' you should get a prompt `> '.  The syntax for the
-REPL is quite simple: every command is either a help request, a pipe
-or a request.
+By executing `./crest' you should get a prompt `> '.  The syntax for
+the REPL is quite simple: every command is either a builtin, a pipe or
+a request.
 
 The syntax for the request is: ``VERB URL PAYLOAD'' where the verb is
 an HTTP method (the case doesn't matter) like GET or POST (or HEAD, PUT,
@@ -32,8 +32,11 @@ to a command.  The syntax is `|cmd', where `cmd' is a sh(1) command.
 The given command will be exec'd as ``/bin/sh -c cmd'' and its stdin
 will be the last received HTTP response.
 
-An help request is either `help' or `usage' and all they do is print a
-brief usage.
+The builtin command (this may not be the better way to naming this
+commands, but still...) are some ``special'' commands:
+
+ - `help' or `usage' print a brief usage
+ - `quit' or `exit' to, well, hum, exit the repl.
 
 
 Flags
