@@ -110,6 +110,8 @@ repl()
 	if (res != NULL)
 		free(res);
 
-	free(line);
+	if (line != NULL)
+		free(line);
+
 	return !ferror(stdin);
 }
