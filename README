@@ -72,6 +72,7 @@ Works really well inside acme(1).
 TODOs
 -----
 
+ - [ ] split the code into two processes and pledge(3) 'em
  - [ ] implement the code for CONNECT, DELETE, OPTIONS, PATCH
        PUT & TRACE.
  - [ ] flag to define headers
