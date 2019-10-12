@@ -54,6 +54,7 @@ main(int argc, char **argv)
 {
 	int ch;
 
+	prefix = NULL;
 	prgname = *argv;
 
 	http_version = CURL_HTTP_VERSION_2TLS;
@@ -64,7 +65,7 @@ main(int argc, char **argv)
 
 	headers = NULL;
 
-	while ((ch = getopt(argc, argv, "ivH:P:h:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "ivH:P:V:h:p:")) != -1) {
 		switch (ch) {
 		case 'H':
 			HPUSH(headers, optarg);
@@ -91,6 +92,37 @@ main(int argc, char **argv)
 			port = lval;
 			break;
 		}
+
+		case 'V':
+			switch (*optarg) {
+			case '0':
+				http_version = CURL_HTTP_VERSION_1_0;
+				break;
+
+			case '1':
+				http_version = CURL_HTTP_VERSION_1_1;
+				break;
+
+			case '2':
+				http_version = CURL_HTTP_VERSION_2;
+				break;
+
+			case 'T':
+				http_version = CURL_HTTP_VERSION_2TLS;
+				break;
+
+			case '3':
+				http_version = CURL_HTTP_VERSION_3;
+				break;
+
+			case 'X':
+				http_version = CURL_HTTP_VERSION_NONE;
+				break;
+
+			default:
+				err(1, "-V: valid values are 0, 1, 2, T, 3, X");
+			}
+			break;
 
 		case 'h': {
 			char *hdr = NULL;

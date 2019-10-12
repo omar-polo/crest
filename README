@@ -48,6 +48,17 @@ than once.
 The port to talk to can be encoded in the prefix (-p) or set with the
 -P flag.
 
+The HTTP version can be selected with the -V flag:
+ * -V0 means HTTP/1.0
+ * -V1 means HTTP/1.1
+ * -V2 means HTTP/2
+ * -VT means HTTP/2 over TLS only (the default)
+ * -V3 means HTTP/3 (not really tested tho)
+ * -VX means "whatever you (libcurl) thinks it's better!"
+Note that in some cases (like -V2) libcurl may still decide to downgrade
+the connection to HTTP/1.1 if the version of the protocol cannot be
+negotiated with the server.
+
 A shorthand to set the Host HTTP header is the -h flag. `-h example.com'
 is equivalent to `-H "Host: example.com"'.
 
@@ -84,8 +95,8 @@ TODOs
  - [ ] split the code into two processes and pledge(3) 'em
  - [ ] implement the code for CONNECT, DELETE, OPTIONS, PATCH
        PUT & TRACE.
- - [ ] flag to define headers
- - [ ] flag to choose the default HTTP version
+ - [x] flag to define headers
+ - [x] flag to choose the default HTTP version
  - [ ] flag (or something else) to hide/blacklist some/all response
        header
  - [ ] `set' command to change some parameters at runtime
