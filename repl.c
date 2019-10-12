@@ -85,6 +85,8 @@ repl()
 			continue;
 		}
 
+		cmd.path = NULL;
+		cmd.payload = NULL;
 		if (!parse(line, &cmd)) {
 			if (cmd.path != NULL)
 				free(cmd.path);
