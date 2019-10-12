@@ -77,6 +77,9 @@ repl()
 			continue;
 		}
 
+		if (!strcmp(line, "quit") || !strcmp(line, "exit"))
+			break;
+
 		if (*line == '|') {
 			do_pipe(line + 1, res, reslen);
 			continue;
