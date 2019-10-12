@@ -17,19 +17,23 @@
 #ifndef CREST_H
 #define CREST_H
 
+#include <curl/curl.h>
 #include <sys/types.h>
 
 #define BUFFER_SIZE (256 * 1024) /* 256 kb */
 #define PROMPT "> "
 #define USERAGENT "cREST/0.1"
 
-extern char *host;
+extern const char *prefix;
 extern char *prgname;
 
 extern long http_version;
+extern long port; /* it's really a 16 bit */
 
 extern int verbose;
 extern int skip_peer_verification;
+
+extern struct curl_slist *headers;
 
 enum http_methods {
 	CONNECT,
