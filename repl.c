@@ -78,7 +78,7 @@ repl()
 		}
 
 		if (*line == '|') {
-			do_pipe(++line, res, reslen);
+			do_pipe(line + 1, res, reslen);
 			continue;
 		}
 
