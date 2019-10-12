@@ -59,6 +59,9 @@ do_url(const struct cmd *cmd)
 	char *u;
 	int l;
 
+	if (prefix == NULL)
+		return strdup(cmd->path);
+
 	/* strlen(prefix) >= 1 by main() */
 
 	if (*cmd->path == '/' && prefix[strlen(prefix) - 1] == '/')
