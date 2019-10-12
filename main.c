@@ -17,16 +17,31 @@
 #include "crest.h"
 
 #include <curl/curl.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-char *host;
+const char *prefix;
 char *prgname;
 
 long http_version;
+long port;
 
 int verbose;
 int skip_peer_verification;
+
+struct curl_slist *headers;
+#define HPUSH(h, v)                                                            \
+	do {                                                                   \
+		struct curl_slist *t = NULL;                                   \
+		t = curl_slist_append(h, v);                                   \
+		if (t == NULL)                                                 \
+			err(1, "curl_slist_append");                           \
+		h = t;                                                         \
+	} while (0)
 
 void
 usage()
@@ -39,22 +54,65 @@ main(int argc, char **argv)
 {
 	int ch;
 
-	host = NULL;
 	prgname = *argv;
 
 	http_version = CURL_HTTP_VERSION_2TLS;
+	port = -1;
 
 	verbose = 0;
 	skip_peer_verification = 1;
 
-	while ((ch = getopt(argc, argv, "ivh:")) != -1) {
+	headers = NULL;
+
+	while ((ch = getopt(argc, argv, "ivH:P:h:p:")) != -1) {
 		switch (ch) {
-		case 'h':
-			host = optarg;
+		case 'H':
+			HPUSH(headers, optarg);
 			break;
+
+		case 'P': {
+			char *ep;
+			long lval;
+
+			errno = 0;
+			lval = strtol(optarg, &ep, 10);
+			if (optarg[0] == '\0' || *ep != '\0') {
+				warnx("%s is not a number", optarg);
+				break;
+			}
+			if ((errno == ERANGE
+				    && (lval == LONG_MAX || lval == LONG_MIN))
+				|| (lval > 65535 || lval < 1)) {
+				warnx("%s is either too large or too small to "
+				      "be a port number",
+					optarg);
+				break;
+			}
+			port = lval;
+			break;
+		}
+
+		case 'h': {
+			char *hdr = NULL;
+
+			if (asprintf(&hdr, "Host: %s", optarg) == -1)
+				err(1, "asprintf");
+
+			HPUSH(headers, hdr);
+			free(hdr);
+			break;
+		}
 
 		case 'i':
 			skip_peer_verification = 1;
+			break;
+
+		case 'p':
+			if (strlen(optarg) == 0) {
+				warnx("prefix \"%s\" is too small", optarg);
+				break;
+			}
+			prefix = optarg;
 			break;
 
 		case 'v':
@@ -71,6 +129,7 @@ main(int argc, char **argv)
 
 	repl();
 
+	curl_slist_free_all(headers);
 	curl_global_cleanup();
 
 	return 0;
