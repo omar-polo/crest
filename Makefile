@@ -1,5 +1,5 @@
 CC	?= cc
-CFLAGS	 = `pkg-config --cflags libcurl` -g
+CFLAGS	 = `pkg-config --cflags libcurl` -g -D_GNU_SOURCE
 LDFLAGS	 = `pkg-config --libs   libcurl`
 
 .PHONY: all clean
