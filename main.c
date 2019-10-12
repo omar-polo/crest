@@ -46,7 +46,9 @@ struct curl_slist *headers;
 void
 usage()
 {
-	printf("USAGE: %s [-h host]\n", prgname);
+	printf("USAGE: %s [-iv] [-H header] [-P port] [-V http version] "
+	       "[-h host] [-p prefix]\n",
+		prgname);
 }
 
 int
