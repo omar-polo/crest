@@ -42,17 +42,26 @@ commands, but still...) are some ``special'' commands:
 Flags
 -----
 
-To avoid typing the whole URL every time, cREST supports the `-h'
-flag to set a prefix.  During the session it is used, every URL will
-be prefixed with that prefix.  For example, let's say that we execute
-`./crest -h example.com', then we run at the repl `get user/5'.  The URL
-of the request will be the prefix + / + the url given in the command,
-that is `example.com/user/5'.
+Custom HTTP headers can be added with the -H flag.  Can be provided more
+than once.
 
-The `-v' flag increase the verbosity.  Can be provided more than once.
+The port to talk to can be encoded in the prefix (-p) or set with the
+-P flag.
+
+A shorthand to set the Host HTTP header is the -h flag. `-h example.com'
+is equivalent to `-H "Host: example.com"'.
 
 The `-i' flag disables the verification of the TLS cert used by the
 server.
+
+To avoid typing the whole URL every time, cREST supports the `-p'
+flag to set a prefix.  During the session it is used, every URL will
+be prefixed with that prefix.  For example, let's say that we execute
+`./crest -p example.com/', then we run at the repl `get /user/5'.
+The URL of the request will be the prefix plus the url given (slashes
+are added only if needed), in this case `example.com/user/5'.
+
+The `-v' flag increase the verbosity.  Can be provided more than once.
 
 
 TIPS
