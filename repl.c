@@ -47,8 +47,7 @@ do_pipe(char *cmd, char *data, size_t len)
 		close(fds[1]);
 
 		execl("/bin/sh", "sh", "-c", cmd, NULL);
-		warn("execl");
-		break;
+		err(1, "execl");
 
 	default:
 		write(fds[1], data, len);
