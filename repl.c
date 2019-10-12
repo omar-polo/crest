@@ -40,10 +40,9 @@ do_pipe(char *cmd, char *data, size_t len)
 		break;
 
 	case 0:
-		if (dup2(fds[0], 0) == -1) {
-			warn("dup2");
-			exit(1);
-		}
+		if (dup2(fds[0], 0) == -1)
+			err(1, "dup2");
+
 		close(fds[0]);
 		close(fds[1]);
 
