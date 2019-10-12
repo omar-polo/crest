@@ -12,7 +12,8 @@ Make sure you have libcurl installed (you may need a libcurl
 dev/devel/develop package) and execute `make'.  You should find the
 `crest' executable.
 
-AFAIK it should build on every (reasonably recent) POSIX-conforming OS where libcurl and asprintf(3) are available.
+AFAIK it should build on every (reasonably recent) POSIX-conforming OS
+where libcurl and asprintf(3) are available.
 
 
 Usage
