@@ -47,7 +47,7 @@ void
 usage()
 {
 	printf("USAGE: %s [-iv] [-H header] [-P port] [-V http version] "
-	       "[-h host] [-p prefix]\n",
+	       "[-c jtx] [-h host] [-p prefix]\n",
 		prgname);
 }
 
