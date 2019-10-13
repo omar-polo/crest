@@ -85,8 +85,14 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	CURL *curl;
 	CURLcode code;
 	char *url;
-	int r;
+	int r, ret;
 	struct write_result res;
+	struct curl_slist *hdrs;
+
+	curl = NULL;
+	url = NULL;
+	hdrs = NULL;
+	ret = 0;
 
 	*rets = NULL;
 	*retl = 0;
@@ -96,8 +102,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 
 	if ((curl = curl_easy_init()) == NULL) {
 		warnx("curl_easy_init failed");
-		free(url);
-		return 0;
+		goto fail;
 	}
 
 	switch (cmd->method) {
@@ -137,9 +142,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	case TRACE:
 	default:
 		warnx("method %s not (yet) supported", method2str(cmd->method));
-		curl_easy_cleanup(curl);
-		free(url);
-		return 0;
+		goto fail;
 	}
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -164,17 +167,20 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 
 		if (res.data == NULL) {
 			warn("calloc");
-			curl_easy_cleanup(curl);
-			free(url);
-			return 0;
+			goto fail;
 		}
 	}
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write_res);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
 
-	if (headers != NULL)
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	hdrs = NULL;
+	if (headers != NULL) {
+		hdrs = svec_to_curl(headers);
+		if (hdrs == NULL)
+			goto fail;
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
+	}
 
 	code = curl_easy_perform(curl);
 
@@ -184,17 +190,22 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 
 		if (res.data != NULL)
 			free(res.data);
-
-		*rets = NULL;
-		*retl = 0;
+		goto fail;
 	} else {
 		printf("%s\n", res.data);
 		*rets = res.data;
 		*retl = res.size;
 	}
 
-	curl_easy_cleanup(curl);
-	free(url);
+	ret = 1;
 
-	return 1;
+fail:
+	if (url != NULL)
+		free(url);
+	if (curl != NULL)
+		curl_easy_cleanup(curl);
+	if (hdrs != NULL)
+		curl_slist_free_all(hdrs);
+
+	return ret;
 }

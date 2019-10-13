@@ -33,13 +33,13 @@ long port;
 int verbose;
 int skip_peer_verification;
 
-struct curl_slist *headers;
-#define HPUSH(h, v)                                                            \
+struct svec *headers;
+#define HPUSH(h, v, d)                                                         \
 	do {                                                                   \
-		struct curl_slist *t = NULL;                                   \
-		t = curl_slist_append(h, v);                                   \
+		struct svec *t = NULL;                                         \
+		t = svec_add(h, v, d);                                         \
 		if (t == NULL)                                                 \
-			err(1, "curl_slist_append");                           \
+			err(1, "svec_add");                                    \
 		h = t;                                                         \
 	} while (0)
 
@@ -70,7 +70,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "ivH:P:V:c:h:p:")) != -1) {
 		switch (ch) {
 		case 'H':
-			HPUSH(headers, optarg);
+			HPUSH(headers, optarg, 0);
 			break;
 
 		case 'P': {
@@ -129,16 +129,17 @@ main(int argc, char **argv)
 		case 'c':
 			switch (*optarg) {
 			case 'j':
-				HPUSH(headers,
-					"Content-Type: application/json");
+				HPUSH(headers, "Content-Type: application/json",
+					0);
 				break;
 
 			case 't':
-				HPUSH(headers, "Content-Type: text/plain");
+				HPUSH(headers, "Content-Type: text/plain", 0);
 				break;
 
 			case 'x':
-				HPUSH(headers, "Content-Type: application/xml");
+				HPUSH(headers, "Content-Type: application/xml",
+					0);
 				break;
 
 			default:
@@ -152,8 +153,7 @@ main(int argc, char **argv)
 			if (asprintf(&hdr, "Host: %s", optarg) == -1)
 				err(1, "asprintf");
 
-			HPUSH(headers, hdr);
-			free(hdr);
+			HPUSH(headers, hdr, 1);
 			break;
 		}
 
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 
 	repl();
 
-	curl_slist_free_all(headers);
+	svec_free(headers);
 	curl_global_cleanup();
 
 	return 0;

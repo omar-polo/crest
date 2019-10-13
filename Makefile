@@ -9,7 +9,7 @@ all: crest
 clean:
 	rm -f *.o crest
 
-OBJS	 = main.o repl.o io.o parse.o http.o
+OBJS	 = main.o repl.o io.o parse.o http.o svec.o
 ${OBJS}: crest.h
 
 crest: ${OBJS}

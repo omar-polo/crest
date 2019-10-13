@@ -33,7 +33,7 @@ extern long port; /* it's really a 16 bit */
 extern int verbose;
 extern int skip_peer_verification;
 
-extern struct curl_slist *headers;
+extern struct svec *headers;
 
 enum http_methods {
 	CONNECT,
@@ -53,6 +53,17 @@ struct cmd {
 	char *payload;
 };
 
+struct str {
+	char *s;
+	int dirty;
+};
+
+struct svec {
+	size_t len;
+	size_t cap;
+	struct str *d;
+};
+
 void		 usage();
 
 /* parse-related stuff */
@@ -68,5 +79,10 @@ ssize_t		 readline_wp(char ** restrict, size_t * restrict,
 
 /* main loop */
 int		 repl();
+
+/* svec related */
+struct svec	*svec_add(struct svec*, char*, int);
+void		 svec_free(struct svec*);
+struct curl_slist *svec_to_curl(struct svec*);
 
 #endif
