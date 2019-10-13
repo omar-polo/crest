@@ -101,6 +101,14 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	}
 
 	switch (cmd->method) {
+	case DELETE:
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+		if (cmd->payload != NULL)
+			curl_easy_setopt(
+				curl, CURLOPT_POSTFIELDS, cmd->payload);
+		break;
+
 	case GET:
 		break;
 
@@ -114,7 +122,6 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 		break;
 
 	case CONNECT:
-	case DELETE:
 	case OPTIONS:
 	case PATCH:
 	case PUT:

@@ -93,8 +93,9 @@ TODOs
 -----
 
  - [ ] split the code into two processes and pledge(3) 'em
- - [ ] implement the code for CONNECT, DELETE, OPTIONS, PATCH
+ - [ ] implement the code for CONNECT, OPTIONS, PATCH
        PUT & TRACE.
+ - [x] DELETE
  - [x] flag to define headers
  - [x] flag to choose the default HTTP version
  - [ ] flag (or something else) to hide/blacklist some/all response
