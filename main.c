@@ -67,7 +67,7 @@ main(int argc, char **argv)
 
 	headers = NULL;
 
-	while ((ch = getopt(argc, argv, "ivH:P:V:h:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "ivH:P:V:c:h:p:")) != -1) {
 		switch (ch) {
 		case 'H':
 			HPUSH(headers, optarg);
@@ -123,6 +123,26 @@ main(int argc, char **argv)
 
 			default:
 				err(1, "-V: valid values are 0, 1, 2, T, 3, X");
+			}
+			break;
+
+		case 'c':
+			switch (*optarg) {
+			case 'j':
+				HPUSH(headers,
+					"Content-Type: application/json");
+				break;
+
+			case 't':
+				HPUSH(headers, "Content-Type: text/plain");
+				break;
+
+			case 'x':
+				HPUSH(headers, "Content-Type: application/xml");
+				break;
+
+			default:
+				err(1, "-c: valid values are j, t or x");
 			}
 			break;
 

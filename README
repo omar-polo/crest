@@ -59,6 +59,11 @@ Note that in some cases (like -V2) libcurl may still decide to downgrade
 the connection to HTTP/1.1 if the version of the protocol cannot be
 negotiated with the server.
 
+The -c flag can be used as a shorthand for common Content-Types:
+ * -cj is equivalent to -H "Content-Type: application/json"
+ * -ct is equivalent to -H "Content-Type: text/plain"
+ * -cx is equivalent to -H "Content-Type: application/xml"
+
 A shorthand to set the Host HTTP header is the -h flag. `-h example.com'
 is equivalent to `-H "Host: example.com"'.
 
