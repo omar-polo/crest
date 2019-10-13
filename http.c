@@ -116,13 +116,22 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
 		break;
 
+	case OPTIONS:
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
+
+		/* by RFC 7231 if a payload is present, we MUST send a
+		 * Content-Type.  We don't have still a way to define
+		 * the Content-Type of the request, so... */
+		if (cmd->payload != NULL)
+			warnx("ignoring payload for OPTIONS\n");
+		break;
+
 	case POST:
 		curl_easy_setopt(curl, CURLOPT_POST, 1);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cmd->payload);
 		break;
 
 	case CONNECT:
-	case OPTIONS:
 	case PATCH:
 	case PUT:
 	case TRACE:
