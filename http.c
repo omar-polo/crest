@@ -121,6 +121,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	case TRACE:
 	default:
 		warnx("method %s not (yet) supported", method2str(cmd->method));
+		curl_easy_cleanup(curl);
 		free(url);
 		return 0;
 	}
@@ -132,7 +133,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, stdout);
 	curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, http_version);
 
-	if (port != -1)
+	if (port != -1) /* port is in valid range due to main(), or is -1 */
 		curl_easy_setopt(curl, CURLOPT_PORT, port);
 
 	if (skip_peer_verification)
