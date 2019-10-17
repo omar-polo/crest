@@ -20,6 +20,9 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 
+#include <compat.h>
+#include <imsg.h>
+
 #define BUFFER_SIZE (256 * 1024) /* 256 kb */
 #define PROMPT "> "
 #define USERAGENT "cREST/0.1"
@@ -34,6 +37,33 @@ extern int verbose;
 extern int skip_peer_verification;
 
 extern struct svec *headers;
+
+enum imsg_type {
+
+	/* parent -> child
+	 * tell the child to exit */
+	IMSG_EXIT,
+	
+	/* parent -> child
+	 * tell the child the method for the next req */
+	IMSG_SET_METHOD,
+	
+	/* parent -> child
+	 * tell the child the url for the next request */
+	IMSG_SET_URL,
+	
+	/* parent -> child
+	 * tell the child the payload for the next request */
+	IMSG_SET_PAYLOAD,
+	
+	/* parent -> child
+	 * tell the child to perform the request */
+	IMSG_DO_REQ,
+
+	/* parent <- child
+	 * return the body */
+	IMSG_BODY,
+};
 
 enum http_methods {
 	CONNECT,
@@ -76,9 +106,11 @@ int		 do_cmd(const struct cmd*, char**, size_t*);
 /* print the prompt and read a line (getline(3)-style) */
 ssize_t		 readline_wp(char ** restrict, size_t * restrict, 
 			const char * restrict);
+/* wait until fd becomes ready to read */
+int		 poll_read(int);
 
 /* main loop */
-int		 repl();
+int		 repl(struct imsgbuf*);
 
 /* svec related */
 struct svec	*svec_add(struct svec*, char*, int);

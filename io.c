@@ -14,10 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "crest.h"
-
+#include <err.h>
+#include <poll.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include "crest.h"
 
 ssize_t
 readline_wp(char **restrict lineptr, size_t *restrict n,
@@ -29,4 +31,21 @@ readline_wp(char **restrict lineptr, size_t *restrict n,
 	}
 
 	return getline(lineptr, n, stdin);
+}
+
+int
+poll_read(int fd)
+{
+	struct pollfd fds;
+
+	fds.fd = fd;
+	fds.events = POLLIN;
+
+	if (poll(&fds, 1, -1) == -1)
+		err(1, "poll");
+
+	if (fds.revents & (POLLERR | POLLNVAL))
+		errx(1, "bad fd");
+
+	return 0;
 }

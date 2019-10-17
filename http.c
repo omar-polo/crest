@@ -14,12 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "crest.h"
-
 #include <curl/curl.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "crest.h"
 
 struct write_result {
 	char *data;
@@ -141,7 +141,8 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	case PUT:
 	case TRACE:
 	default:
-		warnx("method %s not (yet) supported", method2str(cmd->method));
+		warnx("method %s not (yet) supported",
+			method2str(cmd->method));
 		goto fail;
 	}
 
@@ -194,7 +195,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	} else {
 		printf("%s\n", res.data);
 		*rets = res.data;
-		*retl = res.size;
+		*retl = res.pos;
 	}
 
 	ret = 1;

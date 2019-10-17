@@ -14,14 +14,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "crest.h"
+#include <sys/wait.h>
 
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/wait.h>
 #include <unistd.h>
+
+#include "crest.h"
 
 static void
 do_pipe(char *cmd, char *data, size_t len)
@@ -58,7 +59,68 @@ do_pipe(char *cmd, char *data, size_t len)
 }
 
 int
-repl()
+exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, char **rets,
+	size_t *retl)
+{
+	struct imsg imsg;
+	size_t pathlen, paylen;
+	ssize_t n, datalen;
+
+	pathlen = paylen = 0;
+
+	pathlen = strlen(cmd->path);
+	if (cmd->payload != NULL)
+		paylen = strlen(cmd->payload);
+
+	if (pathlen >= UINT16_MAX || paylen >= UINT16_MAX)
+		err(1, "url or payload too big");
+
+	imsg_compose(ibuf, IMSG_SET_METHOD, 0, 0, -1, &cmd->method,
+		sizeof(enum http_methods));
+	imsg_compose(ibuf, IMSG_SET_URL, 0, 0, -1, cmd->path, pathlen);
+	imsg_compose(ibuf, IMSG_SET_PAYLOAD, 0, 0, -1, cmd->payload, paylen);
+	imsg_compose(ibuf, IMSG_DO_REQ, 0, 0, -1, NULL, 0);
+
+	/* retry on errno == EAGAIN? */
+	if ((n = msgbuf_write(&ibuf->w)) == -1)
+		err(1, "msgbuf_write");
+	if (n == 0)
+		err(1, "child vanished");
+
+	/* read the response */
+
+	poll_read(ibuf->fd);
+	if ((n = imsg_read(ibuf)) == -1)
+		err(1, "imsg_read");
+	if (n == 0)
+		errx(1, "child vanished");
+
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		err(1, "imsg_get");
+	if (n == 0)
+		errx(1, "no messages?");
+
+	datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+
+	if (imsg.hdr.type != IMSG_BODY)
+		err(1, "unexpected response type");
+
+	if (datalen == 0) {
+		*rets = NULL;
+		*retl = 0;
+	} else {
+		*retl = datalen;
+		*rets = calloc(datalen + 1, 1);
+		if (*rets == NULL)
+			err(1, "calloc");
+		memcpy(*rets, imsg.data, datalen);
+	}
+
+	imsg_free(&imsg);
+}
+
+int
+repl(struct imsgbuf *ibuf)
 {
 	struct cmd cmd;
 
@@ -96,13 +158,13 @@ repl()
 		}
 
 		if (verbose > 2)
-			warnx("{ method=%d, path=%s, payload=%s }", cmd.method,
-				cmd.path, cmd.payload);
+			warnx("{ method=%d, path=%s, payload=%s }",
+				cmd.method, cmd.path, cmd.payload);
 
 		if (res != NULL)
 			free(res);
 
-		do_cmd(&cmd, &res, &reslen);
+		exec_req(ibuf, &cmd, &res, &reslen);
 
 		free(cmd.path);
 		if (cmd.payload != NULL)
