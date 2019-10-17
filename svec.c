@@ -14,10 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "crest.h"
-
 #include <ctype.h>
 #include <stdlib.h>
+
+#include "crest.h"
 
 static struct svec *
 svec_new()
@@ -116,6 +116,9 @@ void
 svec_free(struct svec *svec)
 {
 	size_t i;
+
+	if (svec == NULL)
+		return;
 
 	for (i = 0; i < svec->len; ++i) {
 		if (svec->d[i].dirty)
