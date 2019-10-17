@@ -2,7 +2,16 @@ CREST
 =====
 
 cREST is a simple cli to tests REST endpoints, it depends on libcurl
-and is released under the OpenBSD license (ISC basically.)
+and is released under a BSD licence.
+
+
+License
+-------
+
+All the code in released under the OpenBSD licence, except for some file
+in the compat folder.  However, all the code is under a BSD-like license.
+Please, check the first line of the files to find the copyright owner
+and the license.
 
 
 Building
@@ -97,7 +106,7 @@ Works really well inside acme(1).
 TODOs
 -----
 
- - [ ] split the code into two processes and pledge(3) 'em
+ - [x] split the code into two processes and pledge(3) 'em
  - [ ] implement the code for CONNECT, PATCH, PUT & TRACE.
  - [x] DELETE, OPTIONS
  - [x] flag to define headers
