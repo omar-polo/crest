@@ -14,6 +14,7 @@ typedef uint8_t u_char;
 
 #ifndef __OpenBSD__
 #define pledge(s, p) (0)
+#define unveil(s, p) (0)
 #endif
 
 /* ugly, I know, but:
