@@ -8,10 +8,9 @@ and is released under a BSD licence.
 License
 -------
 
-All the code in released under the OpenBSD licence, except for some file
-in the compat folder.  However, all the code is under a BSD-like license.
-Please, check the first line of the files to find the copyright owner
-and the license.
+All the code is released under the OpenBSD license, with the only
+exception being compat/queue.h that is BSD 3-clause.
+
 
 
 Building
