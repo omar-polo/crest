@@ -117,6 +117,8 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, char **rets,
 	}
 
 	imsg_free(&imsg);
+
+	return 0;
 }
 
 int
