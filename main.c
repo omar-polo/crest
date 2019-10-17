@@ -197,10 +197,17 @@ main(int argc, char **argv)
 		err(1, "fork");
 
 	case 0:
+		if (unveil("/etc/ssl/", "r") == -1)
+			err(1, "unveil");
+		if (pledge("stdio rpath dns inet", NULL) == -1)
+			err(1, "pledge");
 		close(imsg_fds[0]);
 		imsg_init(&child_ibuf, imsg_fds[1]);
 		return child_main(&child_ibuf);
 	}
+
+	if (pledge("stdio proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	close(imsg_fds[1]);
 	imsg_init(&parent_ibuf, imsg_fds[0]);
