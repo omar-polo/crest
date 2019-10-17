@@ -12,7 +12,6 @@ All the code is released under the OpenBSD license, with the only
 exception being compat/queue.h that is BSD 3-clause.
 
 
-
 Building
 --------
 
