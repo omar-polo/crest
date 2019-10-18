@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "compat.h"
 #include "crest.h"
 
 static void
@@ -57,6 +58,30 @@ do_pipe(char *cmd, char *data, size_t len)
 		close(fds[0]);
 		wait(NULL);
 	}
+}
+
+void
+safe_println(const char *text, size_t len)
+{
+	char *s;
+	size_t slen;
+
+	slen = len * 4 + 1;
+
+	if ((s = calloc(slen, 1)) == NULL)
+		err(1, "calloc");
+
+	if (strnvis(s, text, slen, VIS_CSTYLE) == -1)
+		err(1, "strnvis");
+
+	/* we don't care about the NUL-terminator, since we'll be explicit and
+	 * use write(2) instead of a printf.  So we recycle that byte as a
+	 * newline. */
+	s[slen - 1] = '\n';
+
+	write(1, s, slen);
+
+	free(s);
 }
 
 /* 0 on end, 1 on continue */
@@ -172,10 +197,8 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
 	while (recv_into(ibuf, r))
 		; /* no-op */
 
-	write(1, r->headers, r->hlen);
-	putchar('\n');
-	write(1, r->body, r->blen);
-	putchar('\n');
+	safe_println(r->headers, r->hlen);
+	safe_println(r->body, r->blen);
 
 	return 0;
 }
