@@ -7,10 +7,11 @@ LDFLAGS	 = `pkg-config --libs   libcurl`
 all: crest
 
 clean:
-	rm -f *.o crest
+	rm -f *.o compat/*.o crest
 
 OBJS	 = main.o repl.o io.o parse.o http.o svec.o
-COMPAT	 = imsg.o imsg-buffer.o freezero.o recallocarray.o
+COMPAT	 = compat/imsg.o compat/imsg-buffer.o compat/freezero.o \
+		compat/recallocarray.o
 
 ${OBJS}: crest.h
 
@@ -19,17 +20,4 @@ crest: ${OBJS} ${COMPAT}
 
 .SUFFIXES: .c .o
 .c.o:
-	${CC} ${CFLAGS} -c $< -o $@
-
-# compat stuff:
-imsg.o: compat/imsg.c
-	${CC} ${CFLAGS} -c $< -o $@
-
-imsg-buffer.o: compat/imsg-buffer.c
-	${CC} ${CFLAGS} -c $< -o $@
-
-freezero.o: compat/freezero.c
-	${CC} ${CFLAGS} -c $< -o $@
-
-recallocarray.o: compat/recallocarray.c
 	${CC} ${CFLAGS} -c $< -o $@
