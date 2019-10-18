@@ -67,21 +67,7 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 	struct imsg imsg;
 	int rtype, ret;
 
-	for (;;) {
-		errno = 0;
-		n = imsg_read(ibuf);
-
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			poll_read(ibuf->fd);
-			continue;
-		}
-
-		if (n == -1)
-			err(1, "imsg_read");
-		if (n == 0)
-			err(1, "child vanished");
-		break;
-	}
+	ret = 1;
 
 	if ((n = imsg_get(ibuf, &imsg)) == -1)
 		err(1, "imsg_get");
@@ -92,6 +78,12 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 	rtype = imsg.hdr.type;
 
 	switch (rtype) {
+	case IMSG_STATUS:
+		if (n != sizeof(r->http_code))
+			errx(1, "http_code: wrong size");
+		memcpy(&r->http_code, imsg.data, n);
+		break;
+
 	case IMSG_HEAD:
 		if (r->headers != NULL)
 			errx(1, "headers already recv'd");
@@ -101,7 +93,6 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 			err(1, "calloc");
 		memcpy(r->headers, imsg.data, n);
 		r->hlen = n;
-		ret = 1;
 		break;
 
 	case IMSG_BODY:
@@ -166,9 +157,23 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
 		err(1, "child vanished");
 
 	/* read the response */
+	poll_read(ibuf->fd);
+	for (;;) {
+		errno = 0;
+		n = imsg_read(ibuf);
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			continue;
+		if (n == -1)
+			err(1, "imsg_read");
+		if (n == 0)
+			err(1, "child vanished");
+		break;
+	}
 	while (recv_into(ibuf, r))
 		; /* no-op */
 
+	write(1, r->headers, r->hlen);
+	putchar('\n');
 	write(1, r->body, r->blen);
 	putchar('\n');
 

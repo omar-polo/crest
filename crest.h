@@ -63,6 +63,10 @@ enum imsg_type {
 	/* parent <- child
 	 * curl failed */
 	IMSG_ERR,
+	
+	/* parent <- child
+	 * return the http status */
+	IMSG_STATUS,
 
 	/* parent <- child
 	 * return the headers */

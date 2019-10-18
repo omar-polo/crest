@@ -27,6 +27,20 @@ struct write_result {
 	size_t size;
 };
 
+static int
+init_res(struct write_result *res)
+{
+	memset(res, 0, sizeof(struct write_result));
+
+	res->data = calloc(BUFFER_SIZE, 1);
+	res->size = BUFFER_SIZE;
+	res->pos = 0;
+
+	if (res->data == NULL)
+		err(1, "calloc");
+	return 1;
+}
+
 static size_t
 write_res(void *ptr, size_t size, size_t nmemb, void *s)
 {
@@ -86,7 +100,7 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 	CURLcode code;
 	char *url;
 	int r, ret;
-	struct write_result res;
+	struct write_result hdr, res;
 	struct curl_slist *hdrs;
 
 	curl = NULL;
@@ -148,28 +162,23 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, USERAGENT);
-	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, fwrite);
-	curl_easy_setopt(curl, CURLOPT_HEADERDATA, stdout);
 	curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, http_version);
 
-	if (port != -1) /* port is in valid range due to main(), or is -1 */
+	if (port != -1) /* port is in valid range due to main(), or is
+			   -1 */
 		curl_easy_setopt(curl, CURLOPT_PORT, port);
 
 	if (skip_peer_verification)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
-	if (cmd->method == HEAD) {
-		memset(&res, 0, sizeof(struct write_result));
-	} else {
-		res.data = calloc(BUFFER_SIZE, 1);
-		res.size = BUFFER_SIZE;
-		res.pos = 0;
+	init_res(&hdr);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &write_res);
+	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
 
-		if (res.data == NULL) {
-			warn("calloc");
-			goto fail;
-		}
-	}
+	if (cmd->method == HEAD)
+		memset(&res, 0, sizeof(struct write_result));
+	else
+		init_res(&res);
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write_res);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &res);
@@ -190,10 +199,16 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 
 		if (res.data != NULL)
 			free(res.data);
+		if (hdr.data != NULL)
+			free(hdr.data);
+		hdr.data = res.data = NULL;
+
 		goto fail;
 	} else {
 		curl_easy_getinfo(
 			curl, CURLINFO_RESPONSE_CODE, &resp->http_code);
+		resp->hlen = hdr.pos;
+		resp->headers = hdr.data;
 		resp->blen = res.pos;
 		resp->body = res.data;
 	}

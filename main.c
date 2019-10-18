@@ -252,8 +252,9 @@ child_do_req(struct imsgbuf *ibuf, struct cmd *cmd)
 	} else {
 		if (r.hlen >= UINT16_MAX || r.blen >= UINT16_MAX)
 			errx(1, "response headers or body too big.");
-		/* imsg_compose(ibuf, IMSG_HEAD, 0, 0, -1, r.headers, r.hlen);
-		 */
+		imsg_compose(ibuf, IMSG_STATUS, 0, 0, -1, &r.http_code,
+			sizeof(r.http_code));
+		imsg_compose(ibuf, IMSG_HEAD, 0, 0, -1, r.headers, r.hlen);
 		imsg_compose(ibuf, IMSG_BODY, 0, 0, -1, r.body, r.blen);
 	}
 
