@@ -9,7 +9,7 @@ License
 -------
 
 All the code is released under the OpenBSD license, with the only
-exception being compat/queue.h that is BSD 3-clause.
+exception being compat/queue.h and compat/vis.{c,h} that are BSD 3-clause.
 
 
 Building
@@ -101,11 +101,14 @@ Works really well inside acme(1).
 1: https://github.com/simeji/jid
 
 
-BUGS
-----
+CAVEATS
+-------
 
-All the data received (header + body) is printed AS IS.  This can cause
-funny things if you're using a terminal emulator.
+All the data received (header and body) when displayed will be escaped
+to prevent "funny" sequence to mess up your terminal.  However, this
+is a bit too aggressive: every character outside ASCII gets escaped
+before printing.  Yes, it's 2019 and this still does not support utf8.
+Work will be done in this regard.
 
 
 TODOs
