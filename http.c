@@ -42,23 +42,58 @@ init_res(struct write_result *res)
 }
 
 static size_t
+resize_res(struct write_result *res)
+{
+	char *n;
+	size_t ns;
+
+	ns = res->size + res->size * 1.5;
+
+	if ((n = realloc(res->data, ns)) == NULL) {
+		warn("write_res: realloc");
+		return 0;
+	}
+
+	res->data = n;
+	res->size = ns;
+
+	return ns;
+}
+
+static size_t
+write_res_header(void *ptr, size_t size, size_t nmemb, void *s)
+{
+	size_t i;
+	char *p;
+	struct write_result *res = s;
+
+	p = ptr;
+
+	if (res->pos + size * nmemb >= res->size) {
+		if (resize_res(res) == 0)
+			return 0;
+	}
+
+	for (i = 0; i < size * nmemb; ++i) {
+		if (p[i] == '\r')
+			continue;
+
+		res->data[res->pos] = p[i];
+		res->pos++;
+	}
+
+	res->data[res->pos] = '\0'; /* NUL-terminate the data */
+	return size * nmemb;
+}
+
+static size_t
 write_res(void *ptr, size_t size, size_t nmemb, void *s)
 {
 	struct write_result *res = s;
 
 	if (res->pos + size * nmemb >= res->size) {
-		char *n;
-		size_t ns;
-
-		ns = res->size + res->size * 1.5;
-
-		if ((n = realloc(res->data, ns)) == NULL) {
-			warn("write_res: realloc");
+		if (resize_res(res) == 0)
 			return 0;
-		}
-
-		res->data = n;
-		res->size = ns;
 	}
 
 	memcpy(res->data + res->pos, ptr, size * nmemb);
@@ -172,7 +207,7 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
 	init_res(&hdr);
-	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &write_res);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &write_res_header);
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
 
 	if (cmd->method == HEAD)
