@@ -3,3 +3,6 @@
  - imsg.h from tmux
  - freezero.c from tmux
  - recallocarray.c from tmux
+ - queue.h from tmux
+ - vis.c from tmux
+ - vis.h from tmux
