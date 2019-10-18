@@ -80,7 +80,7 @@ do_url(const struct cmd *cmd)
 }
 
 int
-do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
+do_cmd(const struct cmd *cmd, struct resp *resp)
 {
 	CURL *curl;
 	CURLcode code;
@@ -94,8 +94,7 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 	hdrs = NULL;
 	ret = 0;
 
-	*rets = NULL;
-	*retl = 0;
+	memset(resp, 0, sizeof(struct resp));
 
 	if ((url = do_url(cmd)) == NULL)
 		return 0;
@@ -193,9 +192,10 @@ do_cmd(const struct cmd *cmd, char **rets, size_t *retl)
 			free(res.data);
 		goto fail;
 	} else {
-		printf("%s\n", res.data);
-		*rets = res.data;
-		*retl = res.pos;
+		curl_easy_getinfo(
+			curl, CURLINFO_RESPONSE_CODE, &resp->http_code);
+		resp->blen = res.pos;
+		resp->body = res.data;
 	}
 
 	ret = 1;
@@ -209,4 +209,15 @@ fail:
 		curl_slist_free_all(hdrs);
 
 	return ret;
+}
+
+void
+free_resp(struct resp *r)
+{
+	if (r->headers != NULL)
+		free(r->headers);
+	if (r->body != NULL)
+		free(r->body);
+	if (r->err != NULL)
+		free(r->err);
 }

@@ -59,6 +59,14 @@ enum imsg_type {
 	/* parent -> child
 	 * tell the child to perform the request */
 	IMSG_DO_REQ,
+	
+	/* parent <- child
+	 * curl failed */
+	IMSG_ERR,
+
+	/* parent <- child
+	 * return the headers */
+	IMSG_HEAD,
 
 	/* parent <- child
 	 * return the body */
@@ -83,6 +91,19 @@ struct cmd {
 	char *payload;
 };
 
+struct resp {
+	long	http_code;
+
+	size_t	 hlen;
+	char	*headers;
+
+	size_t	 blen;
+	char	*body;
+
+	size_t	 errlen;
+	char	*err;
+};
+
 struct str {
 	char *s;
 	int dirty;
@@ -101,7 +122,8 @@ const char	*method2str(enum http_methods);
 int		 parse(const char*, struct cmd*);
 
 /* http stuff */
-int		 do_cmd(const struct cmd*, char**, size_t*);
+int		 do_cmd(const struct cmd*, struct resp*);
+void		 free_resp(struct resp*);
 
 /* print the prompt and read a line (getline(3)-style) */
 ssize_t		 readline_wp(char ** restrict, size_t * restrict, 

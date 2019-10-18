@@ -239,6 +239,38 @@ parent_main(struct imsgbuf *ibuf)
 	return 0;
 }
 
+void
+child_do_req(struct imsgbuf *ibuf, struct cmd *cmd)
+{
+	ssize_t n;
+	struct resp r;
+
+	if (!do_cmd(cmd, &r)) {
+		const char *err = "failed";
+		n = strlen(err);
+		imsg_compose(ibuf, IMSG_ERR, 0, 0, -1, err, n);
+	} else {
+		if (r.hlen >= UINT16_MAX || r.blen >= UINT16_MAX)
+			errx(1, "response headers or body too big.");
+		/* imsg_compose(ibuf, IMSG_HEAD, 0, 0, -1, r.headers, r.hlen);
+		 */
+		imsg_compose(ibuf, IMSG_BODY, 0, 0, -1, r.body, r.blen);
+	}
+
+	/* retry on errno == EAGAIN? */
+	if ((n = msgbuf_write(&ibuf->w)) == -1)
+		err(1, "msgbuf_write");
+	if (n == 0)
+		errx(1, "parent vanished");
+
+	if (r.headers != NULL)
+		free(r.headers);
+	if (r.body != NULL)
+		free(r.body);
+	if (r.err != NULL)
+		free(r.body);
+}
+
 /* return 1 only on IMSG_EXIT */
 int
 process_messages(struct imsgbuf *ibuf, struct cmd *cmd)
@@ -291,35 +323,15 @@ process_messages(struct imsgbuf *ibuf, struct cmd *cmd)
 			memcpy(cmd->payload, imsg.data, datalen);
 			break;
 
-		case IMSG_DO_REQ: {
-			ssize_t n;
-			char *rets = NULL;
-			size_t retl = 0;
-
-			do_cmd(cmd, &rets, &retl);
-
-			if (retl >= UINT16_MAX)
-				errx(1, "response body too big (%zu bytes)",
-					retl);
-			imsg_compose(ibuf, IMSG_BODY, 0, 0, -1, rets, retl);
-
-			/* retry on errno == EAGAIN? */
-			if ((n = msgbuf_write(&ibuf->w)) == -1)
-				err(1, "msgbuf_write");
-			if (n == 0)
-				errx(1, "parent vanished");
-
-			if (rets != NULL)
-				free(rets);
+		case IMSG_DO_REQ:
+			child_do_req(ibuf, cmd);
 
 			free(cmd->path);
 			if (cmd->payload != NULL)
 				free(cmd->payload);
-
 			cmd->path = cmd->payload = NULL;
 
 			break;
-		}
 		}
 
 		imsg_free(&imsg);

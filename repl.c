@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,13 +59,90 @@ do_pipe(char *cmd, char *data, size_t len)
 	}
 }
 
+/* 0 on end, 1 on continue */
 int
-exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, char **rets,
-	size_t *retl)
+recv_into(struct imsgbuf *ibuf, struct resp *r)
 {
+	ssize_t n;
 	struct imsg imsg;
+	int rtype, ret;
+
+	for (;;) {
+		errno = 0;
+		n = imsg_read(ibuf);
+
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			poll_read(ibuf->fd);
+			continue;
+		}
+
+		if (n == -1)
+			err(1, "imsg_read");
+		if (n == 0)
+			err(1, "child vanished");
+		break;
+	}
+
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		err(1, "imsg_get");
+	if (n == 0)
+		err(1, "no messages");
+
+	n = imsg.hdr.len - IMSG_HEADER_SIZE;
+	rtype = imsg.hdr.type;
+
+	switch (rtype) {
+	case IMSG_HEAD:
+		if (r->headers != NULL)
+			errx(1, "headers already recv'd");
+
+		r->headers = calloc(n + 1, 1);
+		if (r->headers == NULL)
+			err(1, "calloc");
+		memcpy(r->headers, imsg.data, n);
+		r->hlen = n;
+		ret = 1;
+		break;
+
+	case IMSG_BODY:
+		if (r->body != NULL)
+			errx(1, "body already recv'd");
+
+		r->body = calloc(n + 1, 1);
+		if (r->body == NULL)
+			err(1, "calloc");
+		memcpy(r->body, imsg.data, n);
+		r->blen = n;
+		ret = 0;
+		break;
+
+	case IMSG_ERR:
+		if (r->err != NULL)
+			errx(1, "err already recv'd");
+		r->err = calloc(n + 1, 1);
+		if (r->err == NULL)
+			err(1, "calloc");
+		memcpy(r->err, imsg.data, n);
+		r->blen = n;
+		ret = 0;
+		break;
+
+	default:
+		err(1, "unexpected response type %d", rtype);
+	}
+
+	imsg_free(&imsg);
+	return ret;
+}
+
+int
+exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
+{
 	size_t pathlen, paylen;
 	ssize_t n, datalen;
+	int rtype;
+
+	memset(r, 0, sizeof(struct resp));
 
 	pathlen = paylen = 0;
 
@@ -88,35 +166,11 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, char **rets,
 		err(1, "child vanished");
 
 	/* read the response */
+	while (recv_into(ibuf, r))
+		; /* no-op */
 
-	poll_read(ibuf->fd);
-	if ((n = imsg_read(ibuf)) == -1)
-		err(1, "imsg_read");
-	if (n == 0)
-		errx(1, "child vanished");
-
-	if ((n = imsg_get(ibuf, &imsg)) == -1)
-		err(1, "imsg_get");
-	if (n == 0)
-		errx(1, "no messages?");
-
-	datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
-
-	if (imsg.hdr.type != IMSG_BODY)
-		err(1, "unexpected response type");
-
-	if (datalen == 0) {
-		*rets = NULL;
-		*retl = 0;
-	} else {
-		*retl = datalen;
-		*rets = calloc(datalen + 1, 1);
-		if (*rets == NULL)
-			err(1, "calloc");
-		memcpy(*rets, imsg.data, datalen);
-	}
-
-	imsg_free(&imsg);
+	write(1, r->body, r->blen);
+	putchar('\n');
 
 	return 0;
 }
@@ -125,13 +179,13 @@ int
 repl(struct imsgbuf *ibuf)
 {
 	struct cmd cmd;
-
-	char *res = NULL;
-	size_t reslen = 0;
+	struct resp r;
 
 	char *line = NULL;
 	size_t linesize = 0;
 	ssize_t linelen = 0;
+
+	memset(&r, 0, sizeof(struct resp));
 
 	while ((linelen = readline_wp(&line, &linesize, PROMPT)) != -1) {
 		line[linelen - 1] = '\0';
@@ -145,7 +199,7 @@ repl(struct imsgbuf *ibuf)
 			break;
 
 		if (*line == '|') {
-			do_pipe(line + 1, res, reslen);
+			do_pipe(line + 1, r.body, r.blen);
 			continue;
 		}
 
@@ -163,18 +217,16 @@ repl(struct imsgbuf *ibuf)
 			warnx("{ method=%d, path=%s, payload=%s }",
 				cmd.method, cmd.path, cmd.payload);
 
-		if (res != NULL)
-			free(res);
+		free_resp(&r);
 
-		exec_req(ibuf, &cmd, &res, &reslen);
+		exec_req(ibuf, &cmd, &r);
 
 		free(cmd.path);
 		if (cmd.payload != NULL)
 			free(cmd.payload);
 	}
 
-	if (res != NULL)
-		free(res);
+	free_resp(&r);
 
 	if (line != NULL)
 		free(line);
