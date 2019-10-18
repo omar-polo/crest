@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "queue.h"
+#include "vis.h"
 
 typedef uint8_t u_char;
 

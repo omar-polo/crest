@@ -11,7 +11,7 @@ clean:
 
 OBJS	 = main.o repl.o io.o parse.o http.o svec.o
 COMPAT	 = compat/imsg.o compat/imsg-buffer.o compat/freezero.o \
-		compat/recallocarray.o
+		compat/recallocarray.o compat/vis.o
 
 ${OBJS}: crest.h
 
