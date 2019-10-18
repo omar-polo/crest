@@ -101,8 +101,17 @@ Works really well inside acme(1).
 1: https://github.com/simeji/jid
 
 
+BUGS
+----
+
+All the data received (header + body) is printed AS IS.  This can cause
+funny things if you're using a terminal emulator.
+
+
 TODOs
 -----
+
+(random order)
 
  - [x] split the code into two processes and pledge(3) 'em
  - [ ] implement the code for CONNECT, PATCH, PUT & TRACE.
@@ -114,4 +123,5 @@ TODOs
  - [ ] `set' command to change some parameters at runtime
  - [ ] `add'/`del' command (or better terms?) to add/delete custom
        HTTP headers
+ - [ ] encoding & print
  - [ ] cookie support? not so sure about this.
