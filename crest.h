@@ -81,6 +81,12 @@ enum imsg_type {
 
 	/* parent -> child */
 	IMSG_SET_PEER_VERIF,
+
+	/* parent -> child */
+	IMSG_SHOW,
+
+	/* parent <- child */
+	IMSG_DONE,
 };
 
 enum http_methods {
@@ -114,10 +120,11 @@ enum special_cmd_type {
 };
 
 struct cmd {
-	enum {CMD_REQ, CMD_SET, CMD_SPECIAL} type;
+	enum {CMD_REQ, CMD_SET, CMD_SHOW, CMD_SPECIAL} type;
 	union {
 		struct req req;
 		struct setopt opt;
+		enum imsg_type show;
 		enum special_cmd_type sp;
 	};
 };
@@ -176,6 +183,7 @@ void		 usage();
 
 /* parse-related stuff */
 const char	*method2str(enum http_methods);
+const char	*httpver2str(long);
 int		 parse(const char*, struct cmd*);
 
 /* http stuff */

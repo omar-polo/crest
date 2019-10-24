@@ -23,6 +23,17 @@
 
 #include "crest.h"
 
+/* used to return the address in parse_set */
+static long curl_http_versions[] = {
+	CURL_HTTP_VERSION_1_0,
+	CURL_HTTP_VERSION_1_1,
+	CURL_HTTP_VERSION_2,
+	CURL_HTTP_VERSION_2TLS,
+	CURL_HTTP_VERSION_3,
+	CURL_HTTP_VERSION_NONE,
+};
+static int bools[] = { 0, 1 };
+
 const char *
 method2str(enum http_methods m)
 {
@@ -50,6 +61,27 @@ method2str(enum http_methods m)
 	}
 }
 
+const char *
+httpver2str(long hv)
+{
+	switch (hv) {
+	case CURL_HTTP_VERSION_1_0:
+		return "HTTP/1.0";
+	case CURL_HTTP_VERSION_1_1:
+		return "HTTP/1.1";
+	case CURL_HTTP_VERSION_2:
+		return "HTTP/2";
+	case CURL_HTTP_VERSION_2TLS:
+		return "HTTP/2 with TLS";
+	case CURL_HTTP_VERSION_3:
+		return "HTTP/3";
+	case CURL_HTTP_VERSION_NONE:
+		return "none";
+	default:
+		errx(1, "httver2str: unknown http version %lu", hv);
+	}
+}
+
 static const char *
 eat_spaces(const char *i)
 {
@@ -71,39 +103,20 @@ strsw(const char *a, const char *b)
 	}
 }
 
-static long curl_http_versions[] = {
-	CURL_HTTP_VERSION_1_0,
-	CURL_HTTP_VERSION_1_1,
-	CURL_HTTP_VERSION_2,
-	CURL_HTTP_VERSION_2TLS,
-	CURL_HTTP_VERSION_3,
-	CURL_HTTP_VERSION_NONE,
-};
-
-static int bools[] = { 0, 1 };
-
-/* parse a string that starts with "set" */
 static int
-parse_set(const char *i, struct cmd *cmd)
+parse_setting(const char **r, const char **opt, enum imsg_type *mt)
 {
-	/* grammar:
-	 *	set something value '\n'
-	 */
-	int c, j, k, n, v;
-	const char *opt;
-	const char *opts[] = { "header", "useragent", "prefix", "http",
-		"port", "peer-verification" };
-	const enum imsg_type o2t[] = { IMSG_SET_HEADER, IMSG_SET_UA,
-		IMSG_SET_PREFIX, IMSG_SET_HTTPVER, IMSG_SET_PORT,
-		IMSG_SET_PEER_VERIF };
+	int j, k, n, v, c;
+	const char *opts[] = { "headers", "header", "useragent", "prefix",
+		"http", "http-version", "port", "peer-verification" };
+	const enum imsg_type o2t[] = { IMSG_SET_HEADER, IMSG_SET_HEADER,
+		IMSG_SET_UA, IMSG_SET_PREFIX, IMSG_SET_HTTPVER,
+		IMSG_SET_HTTPVER, IMSG_SET_PORT, IMSG_SET_PEER_VERIF };
+	const char *i;
 
 	n = sizeof(opts) / sizeof(char *);
 
-	assert(strsw(i, "set"));
-
-	i += 3; /* skip the "set" */
-
-	i = eat_spaces(i);
+	i = eat_spaces(*r);
 
 	for (j = 0; *i; ++j) {
 		c = tolower(*i++);
@@ -124,8 +137,8 @@ parse_set(const char *i, struct cmd *cmd)
 	for (k = 0; k < n; ++k) {
 		if (opts[k] != NULL && opts[k][j] == '\0') {
 			v = 1;
-			opt = opts[k];
-			cmd->opt.set = o2t[k];
+			*opt = opts[k];
+			*mt = o2t[k];
 			break;
 		}
 	}
@@ -134,6 +147,54 @@ parse_set(const char *i, struct cmd *cmd)
 		return 0;
 	}
 
+	*r = i;
+	return 1;
+}
+
+/* parse a string that starts with "show" */
+static int
+parse_show(const char *i, struct cmd *cmd)
+{
+	/* grammar:
+	 *	show something
+	 */
+	const char *opt;
+
+	/* instead of defining a bunch of IMSG_SHOW_* settings, re-use the
+	 * IMSG_SET_* also for the show requests */
+
+	assert(strsw(i, "show"));
+
+	i += 4; /* skip the "show" */
+
+	if (!parse_setting(&i, &opt, &cmd->show))
+		return 0;
+
+	i = eat_spaces(i);
+	if (*i != '\0') {
+		warnx("syntax: set <something>");
+		return 0;
+	}
+
+	return 1;
+}
+
+/* parse a string that starts with "set" */
+static int
+parse_set(const char *i, struct cmd *cmd)
+{
+	/* grammar:
+	 *	set something value
+	 */
+	const char *opt;
+
+	assert(strsw(i, "set"));
+
+	i += 3; /* skip the "set" */
+
+	if (!parse_setting(&i, &opt, &cmd->opt.set))
+		return 0;
+
 	i = eat_spaces(i);
 	if (*i == '\0') {
 		warnx("missing value for set %s", opt);
@@ -141,6 +202,7 @@ parse_set(const char *i, struct cmd *cmd)
 	}
 
 	/* i now points to the value */
+
 	switch (cmd->opt.set) {
 	case IMSG_SET_HEADER:
 	case IMSG_SET_UA:
@@ -217,7 +279,7 @@ static int
 parse_req(const char *i, struct cmd *cmd)
 {
 	/* grammar:
-	 *	{GET|POST|...} url payload? '\n'
+	 *	{GET|POST|...} url payload?
 	 */
 
 	int c, j, k, v;
@@ -312,6 +374,11 @@ parse(const char *i, struct cmd *cmd)
 	if (strsw(i, "set")) {
 		cmd->type = CMD_SET;
 		return parse_set(i, cmd);
+	}
+
+	if (strsw(i, "show")) {
+		cmd->type = CMD_SHOW;
+		return parse_show(i, cmd);
 	}
 
 	cmd->type = CMD_REQ;

@@ -79,6 +79,50 @@ child_do_req(struct imsgbuf *ibuf, struct req *req)
 		free(r.body);
 }
 
+static void
+show(enum imsg_type t)
+{
+	switch (t) {
+	case IMSG_SET_HEADER: {
+		size_t i;
+
+		if (headers == NULL)
+			break;
+
+		for (i = 0; i < headers->len; ++i)
+			printf("%s\n", headers->d[i].s);
+		break;
+	}
+
+	case IMSG_SET_UA:
+		printf("%s\n", settings.useragent.s);
+		break;
+
+	case IMSG_SET_PREFIX:
+		printf("%s\n", settings.prefix.s);
+		break;
+
+	case IMSG_SET_HTTPVER:
+		printf("%s\n", httpver2str(settings.http_version));
+		break;
+
+	case IMSG_SET_PORT:
+		if (settings.port != -1)
+			printf("%ld\n", settings.port);
+		break;
+
+	case IMSG_SET_PEER_VERIF:
+		if (settings.skip_peer_verification)
+			puts("false");
+		else
+			puts("true");
+		break;
+
+	default:
+		errx(1, "unknown show %d", t);
+	}
+}
+
 /* return 1 only on IMSG_EXIT */
 static int
 process_messages(struct imsgbuf *ibuf, struct req *req)
@@ -198,6 +242,11 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 				datalen);
 			break;
 		}
+
+		case IMSG_SHOW:
+			show(*(enum imsg_type *)imsg.data);
+			csend(ibuf, IMSG_DONE, NULL, 0);
+			break;
 
 		default:
 			errx(1, "Unknown message type %d", imsg.hdr.type);

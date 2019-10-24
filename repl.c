@@ -102,7 +102,7 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 	if ((n = imsg_get(ibuf, &imsg)) == -1)
 		err(1, "imsg_get");
 	if (n == 0)
-		err(1, "no messages");
+		errx(1, "no messages");
 
 	n = imsg.hdr.len - IMSG_HEADER_SIZE;
 	rtype = imsg.hdr.type;
@@ -195,7 +195,7 @@ exec_req(struct imsgbuf *ibuf, const struct req *req, struct resp *r)
 		if (n == -1)
 			err(1, "imsg_read");
 		if (n == 0)
-			err(1, "child vanished");
+			errx(1, "child vanished");
 		break;
 	}
 	while (recv_into(ibuf, r))
@@ -205,6 +205,33 @@ exec_req(struct imsgbuf *ibuf, const struct req *req, struct resp *r)
 	safe_println(r->body, r->blen);
 
 	return 0;
+}
+
+static void
+wait_for_done(struct imsgbuf *ibuf)
+{
+	ssize_t n;
+	struct imsg imsg;
+
+	poll_read(ibuf->fd);
+	for (;;) {
+		errno = 0;
+		n = imsg_read(ibuf);
+		if (errno == EAGAIN)
+			continue;
+		if (n == -1)
+			err(1, "imsg_read");
+		if (n == 0)
+			errx(1, "child vanished");
+		break;
+	}
+
+	if ((n = imsg_get(ibuf, &imsg)) == -1)
+		err(1, "imsg_get");
+	if (n == 0)
+		errx(1, "no messages");
+	if (imsg.hdr.type != IMSG_DONE)
+		errx(1, "unexpected message %d", imsg.hdr.type);
 }
 
 int
@@ -251,6 +278,11 @@ repl(struct imsgbuf *ibuf, FILE *in)
 
 			if (cmd.opt.set == IMSG_SET_PORT)
 				free(cmd.opt.value);
+			break;
+
+		case CMD_SHOW:
+			csend(ibuf, IMSG_SHOW, &cmd.show, sizeof(cmd.show));
+			wait_for_done(ibuf);
 			break;
 
 		case CMD_SPECIAL:
