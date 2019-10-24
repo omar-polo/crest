@@ -46,5 +46,6 @@ typedef uint8_t u_char;
 void freezero(void*, size_t);
 void *recallocarray(void*, size_t, size_t, size_t);
 
-#endif
+long long strtonum(const char*, long long, long long, const char**);
 
+#endif
