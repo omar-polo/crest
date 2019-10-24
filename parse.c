@@ -14,16 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "crest.h"
-
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-/* grammar is:
- *	{GET|POST|...} url payload? '\n'
- */
+#include "crest.h"
 
 const char *
 method2str(enum http_methods m)
@@ -52,16 +50,183 @@ method2str(enum http_methods m)
 	}
 }
 
-int
-parse(const char *i, struct cmd *cmd)
+static const char *
+eat_spaces(const char *i)
 {
+	while (isspace(*i))
+		i++;
+	return i;
+}
+
+/* string starts with - return 1 if a starts with b */
+static int
+strsw(const char *a, const char *b)
+{
+	for (;;) {
+		if (*b == '\0')
+			return 1;
+		if (*a != *b)
+			return 0;
+		a++, b++;
+	}
+}
+
+static long curl_http_versions[] = {
+	CURL_HTTP_VERSION_1_0,
+	CURL_HTTP_VERSION_1_1,
+	CURL_HTTP_VERSION_2,
+	CURL_HTTP_VERSION_2TLS,
+	CURL_HTTP_VERSION_3,
+	CURL_HTTP_VERSION_NONE,
+};
+
+static int bools[] = { 0, 1 };
+
+/* parse a string that starts with "set" */
+static int
+parse_set(const char *i, struct cmd *cmd)
+{
+	/* grammar:
+	 *	set something value '\n'
+	 */
+	int c, j, k, n, v;
+	const char *opt;
+	const char *opts[] = { "header", "useragent", "prefix", "http",
+		"port", "peer-verification" };
+	const enum imsg_type o2t[] = { IMSG_SET_HEADER, IMSG_SET_UA,
+		IMSG_SET_PREFIX, IMSG_SET_HTTPVER, IMSG_SET_PORT,
+		IMSG_SET_PEER_VERIF };
+
+	n = sizeof(opts) / sizeof(char *);
+
+	assert(strsw(i, "set"));
+
+	i += 3; /* skip the "set" */
+
+	i = eat_spaces(i);
+
+	for (j = 0; *i; ++j) {
+		c = tolower(*i++);
+
+		if (isspace(c))
+			break;
+
+		for (k = 0; k < n; ++k) {
+			if (opts[k] == NULL)
+				continue;
+			if (opts[k][j] != c)
+				opts[k] = NULL;
+		}
+	}
+
+	/* check if we matched a method */
+	v = 0;
+	for (k = 0; k < n; ++k) {
+		if (opts[k] != NULL && opts[k][j] == '\0') {
+			v = 1;
+			opt = opts[k];
+			cmd->opt.set = o2t[k];
+			break;
+		}
+	}
+	if (!v) {
+		warnx("cannot understand the option");
+		return 0;
+	}
+
+	i = eat_spaces(i);
+	if (*i == '\0') {
+		warnx("missing value for set %s", opt);
+		return 0;
+	}
+
+	/* i now points to the value */
+	switch (cmd->opt.set) {
+	case IMSG_SET_HEADER:
+	case IMSG_SET_UA:
+	case IMSG_SET_PREFIX:
+		cmd->opt.value = (void *)i;
+		cmd->opt.len = strlen(i);
+		return 1;
+
+	case IMSG_SET_HTTPVER: {
+		cmd->opt.len = sizeof(long);
+
+		if (!strcmp(i, "1.0"))
+			cmd->opt.value = &curl_http_versions[0];
+		else if (!strcmp(i, "1.1"))
+			cmd->opt.value = &curl_http_versions[1];
+		else if (!strcmp(i, "2"))
+			cmd->opt.value = &curl_http_versions[2];
+		else if (!strcmp(i, "2TLS"))
+			cmd->opt.value = &curl_http_versions[3];
+		else if (!strcmp(i, "3"))
+			cmd->opt.value = &curl_http_versions[4];
+		else if (!strcmp(i, "none"))
+			cmd->opt.value = &curl_http_versions[5];
+		else {
+			warnx("unknown http version %s", i);
+			return 0;
+		}
+
+		return 1;
+	}
+
+	case IMSG_SET_PORT: {
+		const char *errstr;
+		long *port;
+
+		if ((port = malloc(sizeof(long))) == NULL)
+			err(1, "malloc");
+
+		*port = strtonum(i, -1, 65535, &errstr);
+		if (errstr != NULL) {
+			warnx("port is %s: %s", errstr, i);
+			free(port);
+			return 0;
+		}
+		if (*port == 0) {
+			warnx("port is 0, must be 1-65535 or -1 to unset");
+			free(port);
+			return 0;
+		}
+
+		cmd->opt.value = port;
+		cmd->opt.len = sizeof(long);
+		return 1;
+	}
+
+	case IMSG_SET_PEER_VERIF:
+		if (!strcmp(i, "on") || !strcmp(i, "true"))
+			cmd->opt.value = &bools[1];
+		else if (!strcmp(i, "off") || !strcmp(i, "false"))
+			cmd->opt.value = &bools[0];
+		else {
+			warnx("unknown value %s for %s", i, opt);
+			return 0;
+		}
+		cmd->opt.len = sizeof(int);
+		return 1;
+
+	default:
+		err(1, "imsg type %d shouldn't be accessible", cmd->opt.set);
+	}
+}
+
+static int
+parse_req(const char *i, struct cmd *cmd)
+{
+	/* grammar:
+	 *	{GET|POST|...} url payload? '\n'
+	 */
+
 	int c, j, k, v;
 	size_t l;
 	const char *t;
-	const char *methods[] = { "connect", "delete", "get", "head", "options",
-		"patch", "post", "put", "trace" };
-	enum http_methods m2m[] = { CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH,
-		POST, PUT, TRACE };
+	const char *methods[] = { "connect", "delete", "get", "head",
+		"options", "patch", "post", "put", "trace" };
+	enum http_methods m2m[] = { CONNECT, DELETE, GET, HEAD, OPTIONS,
+		PATCH, POST, PUT, TRACE };
 #define N (sizeof(methods) / sizeof(char *))
 
 	/* parse method */
@@ -85,7 +250,7 @@ parse(const char *i, struct cmd *cmd)
 	for (k = 0; k < N; ++k) {
 		if (methods[k] != NULL && methods[k][j] == '\0') {
 			v = 1;
-			cmd->method = m2m[k];
+			cmd->req.method = m2m[k];
 			break;
 		}
 	}
@@ -102,23 +267,53 @@ parse(const char *i, struct cmd *cmd)
 			break;
 	}
 
-	cmd->path = strndup(t, l);
-	if (cmd->path == NULL) {
+	cmd->req.path = strndup(t, l);
+	if (cmd->req.path == NULL) {
 		warn("strndup");
 		return 0;
 	}
 
 	/* no payload case */
 	if (!*i) {
-		cmd->payload = NULL;
+		cmd->req.payload = NULL;
 		return 1;
 	}
 
-	cmd->payload = strdup(i);
-	if (cmd->payload == NULL) {
+	cmd->req.payload = strdup(i);
+	if (cmd->req.payload == NULL) {
 		warn("strdup");
 		return 0;
 	}
 
 	return 1;
+}
+
+int
+parse(const char *i, struct cmd *cmd)
+{
+	if (!strcmp(i, "help") || !strcmp(i, "usage")) {
+		cmd->type = CMD_SPECIAL;
+		cmd->sp = SC_HELP;
+		return 1;
+	}
+
+	if (!strcmp(i, "quit") || !strcmp(i, "exit")) {
+		cmd->type = CMD_SPECIAL;
+		cmd->sp = SC_QUIT;
+		return 1;
+	}
+
+	if (!strcmp(i, "version")) {
+		cmd->type = CMD_SPECIAL;
+		cmd->sp = SC_VERSION;
+		return 1;
+	}
+
+	if (strsw(i, "set")) {
+		cmd->type = CMD_SET;
+		return parse_set(i, cmd);
+	}
+
+	cmd->type = CMD_REQ;
+	return parse_req(i, cmd);
 }

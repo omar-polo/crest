@@ -123,8 +123,12 @@ TODOs
  - [x] flag to choose the default HTTP version
  - [ ] flag (or something else) to hide/blacklist some/all response
        header
- - [ ] `set' command to change some parameters at runtime
+ - [x] `set' command to change some parameters at runtime
+ - [ ] document the set command
+ - [ ] document that it will execute file passed as arguments
  - [ ] `add'/`del' command (or better terms?) to add/delete custom
        HTTP headers
  - [ ] encoding & print
  - [ ] cookie support? not so sure about this.
+ - [ ] support response bigger than UINT16_MAX bytes
+ - [ ] write a nice manpage

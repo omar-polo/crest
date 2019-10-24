@@ -27,167 +27,31 @@
 
 #include "crest.h"
 
-const char *prefix;
-char *prgname;
-
-long http_version;
-long port;
-
-int verbose;
-int skip_peer_verification;
-
-struct svec *headers;
-#define HPUSH(h, v, d)                                                       \
-	do {                                                                 \
-		struct svec *t = NULL;                                       \
-		t = svec_add(h, v, d);                                       \
-		if (t == NULL)                                               \
-			err(1, "svec_add");                                  \
-		h = t;                                                       \
-	} while (0)
+const char *prgname;
+struct settings settings;
 
 void
 usage()
 {
 	printf("USAGE: %s [-iv] [-H header] [-P port] [-V http version] "
-	       "[-c jtx] [-h host] [-p prefix]\n",
+	       "[-c jtx] [-h host] [-p prefix] files...\n",
 		prgname);
 }
-
-int parent_main(struct imsgbuf *);
-int child_main(struct imsgbuf *);
 
 int
 main(int argc, char **argv)
 {
-	int ch, imsg_fds[2];
-	struct imsgbuf parent_ibuf, child_ibuf;
+	int ch, imsg_fds[2], i;
+	struct imsgbuf ibuf, child_ibuf;
 
-	prefix = NULL;
+	memset(&settings, 0, sizeof(struct settings));
+	settings.bufsize = 256 * 1024; /* 256 kb */
+	settings.prompt = LITERAL_STR("> ");
+	settings.useragent = LITERAL_STR("cREST/0.1");
+	settings.http_version = CURL_HTTP_VERSION_2TLS;
+	settings.port = -1;
+
 	prgname = *argv;
-
-	http_version = CURL_HTTP_VERSION_2TLS;
-	port = -1;
-
-	verbose = 0;
-	skip_peer_verification = 1;
-
-	headers = NULL;
-
-	while ((ch = getopt(argc, argv, "ivH:P:V:c:h:p:")) != -1) {
-		switch (ch) {
-		case 'H':
-			HPUSH(headers, optarg, 0);
-			break;
-
-		case 'P': {
-			char *ep;
-			long lval;
-
-			errno = 0;
-			lval = strtol(optarg, &ep, 10);
-			if (optarg[0] == '\0' || *ep != '\0') {
-				warnx("%s is not a number", optarg);
-				break;
-			}
-			if ((errno == ERANGE
-				    && (lval == LONG_MAX || lval == LONG_MIN))
-				|| (lval > 65535 || lval < 1)) {
-				warnx("%s is either too large or too small "
-				      "to "
-				      "be a port number",
-					optarg);
-				break;
-			}
-			port = lval;
-			break;
-		}
-
-		case 'V':
-			switch (*optarg) {
-			case '0':
-				http_version = CURL_HTTP_VERSION_1_0;
-				break;
-
-			case '1':
-				http_version = CURL_HTTP_VERSION_1_1;
-				break;
-
-			case '2':
-				http_version = CURL_HTTP_VERSION_2;
-				break;
-
-			case 'T':
-				http_version = CURL_HTTP_VERSION_2TLS;
-				break;
-
-			case '3':
-				http_version = CURL_HTTP_VERSION_3;
-				break;
-
-			case 'X':
-				http_version = CURL_HTTP_VERSION_NONE;
-				break;
-
-			default:
-				err(1,
-					"-V: accepted values are 0, 1, 2, T, "
-					"3, X");
-			}
-			break;
-
-		case 'c':
-			switch (*optarg) {
-			case 'j':
-				HPUSH(headers,
-					"Content-Type: application/json", 0);
-				break;
-
-			case 't':
-				HPUSH(headers, "Content-Type: text/plain", 0);
-				break;
-
-			case 'x':
-				HPUSH(headers,
-					"Content-Type: application/xml", 0);
-				break;
-
-			default:
-				err(1, "-c: valid values are j, t or x");
-			}
-			break;
-
-		case 'h': {
-			char *hdr = NULL;
-
-			if (asprintf(&hdr, "Host: %s", optarg) == -1)
-				err(1, "asprintf");
-
-			HPUSH(headers, hdr, 1);
-			break;
-		}
-
-		case 'i':
-			skip_peer_verification = 1;
-			break;
-
-		case 'p':
-			if (strlen(optarg) == 0) {
-				warnx("prefix \"%s\" is too small", optarg);
-				break;
-			}
-			prefix = optarg;
-			break;
-
-		case 'v':
-			verbose++;
-			break;
-
-		default:
-			usage();
-			return 1;
-		}
-	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, imsg_fds) == -1)
 		err(1, "socketpair");
@@ -210,152 +74,136 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	close(imsg_fds[1]);
-	imsg_init(&parent_ibuf, imsg_fds[0]);
+	imsg_init(&ibuf, imsg_fds[0]);
 
-	svec_free(headers);
-
-	return parent_main(&parent_ibuf);
-}
-
-int
-parent_main(struct imsgbuf *ibuf)
-{
-	ssize_t n;
-
-	repl(ibuf);
-
-	/* tell the child to exit */
-
-	imsg_compose(ibuf, IMSG_EXIT, 0, 0, -1, NULL, 0);
-
-	/* retry on errno == EAGAIN? */
-	if ((n = msgbuf_write(&ibuf->w)) == -1)
-		err(1, "msgbuf_write");
-	if (n == 0)
-		err(1, "child vanished");
-
-	wait(NULL);
-
-	return 0;
-}
-
-void
-child_do_req(struct imsgbuf *ibuf, struct cmd *cmd)
-{
-	ssize_t n;
-	struct resp r;
-
-	if (!do_cmd(cmd, &r)) {
-		const char *err = "failed";
-		n = strlen(err);
-		imsg_compose(ibuf, IMSG_ERR, 0, 0, -1, err, n);
-	} else {
-		if (r.hlen >= UINT16_MAX || r.blen >= UINT16_MAX)
-			errx(1, "response headers or body too big.");
-		imsg_compose(ibuf, IMSG_STATUS, 0, 0, -1, &r.http_code,
-			sizeof(r.http_code));
-		imsg_compose(ibuf, IMSG_HEAD, 0, 0, -1, r.headers, r.hlen);
-		imsg_compose(ibuf, IMSG_BODY, 0, 0, -1, r.body, r.blen);
-	}
-
-	/* retry on errno == EAGAIN? */
-	if ((n = msgbuf_write(&ibuf->w)) == -1)
-		err(1, "msgbuf_write");
-	if (n == 0)
-		errx(1, "parent vanished");
-
-	if (r.headers != NULL)
-		free(r.headers);
-	if (r.body != NULL)
-		free(r.body);
-	if (r.err != NULL)
-		free(r.body);
-}
-
-/* return 1 only on IMSG_EXIT */
-int
-process_messages(struct imsgbuf *ibuf, struct cmd *cmd)
-{
-	struct imsg imsg;
-	ssize_t n, datalen;
-	int done;
-
-	poll_read(ibuf->fd);
-
-	/* retry on errno == EAGAIN */
-	if ((n = imsg_read(ibuf)) == -1)
-		err(1, "imsg_read");
-	if (n == 0)
-		errx(1, "connection closed");
-	done = 0;
-	for (; !done;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			err(1, "imsg_get");
-
-		if (n == 0) /* no more messages */
-			return 0;
-
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
-
-		switch (imsg.hdr.type) {
-		case IMSG_EXIT:
-			if (verbose > 2)
-				warnx("child: exiting");
-			done = 1;
+	while ((ch = getopt(argc, argv, "ivH:P:V:c:h:p:")) != -1) {
+		switch (ch) {
+		case 'H':
+			csend(&ibuf, IMSG_SET_HEADER, optarg, strlen(optarg));
 			break;
 
-		case IMSG_SET_METHOD:
-			if (datalen < sizeof(cmd->method))
-				err(1, "IMSG_SET_METHOD wrong size");
-			memcpy(&cmd->method, imsg.data, sizeof(cmd->method));
+		case 'P': {
+			const char *errstr = NULL;
+
+			settings.port = strtonum(optarg, 1, 65535, &errstr);
+			if (errstr != NULL)
+				errx(1, "port is %s: %s", errstr, optarg);
+			csend(&ibuf, IMSG_SET_PORT, &settings.port,
+				sizeof(settings.port));
+			break;
+		}
+
+		case 'V':
+			switch (*optarg) {
+			case '0':
+				settings.http_version = CURL_HTTP_VERSION_1_0;
+				break;
+
+			case '1':
+				settings.http_version = CURL_HTTP_VERSION_1_1;
+				break;
+
+			case '2':
+				settings.http_version = CURL_HTTP_VERSION_2;
+				break;
+
+			case 'T':
+				settings.http_version
+					= CURL_HTTP_VERSION_2TLS;
+				break;
+
+			case '3':
+				settings.http_version = CURL_HTTP_VERSION_3;
+				break;
+
+			case 'X':
+				settings.http_version
+					= CURL_HTTP_VERSION_NONE;
+				break;
+
+			default:
+				errx(1, "-V: unknown value %s", optarg);
+			}
+			csend(&ibuf, IMSG_SET_HTTPVER, &settings.http_version,
+				sizeof(settings.http_version));
 			break;
 
-		case IMSG_SET_URL:
-			cmd->path = calloc(datalen + 1, 1);
-			if (cmd->path == NULL)
-				err(1, "calloc");
-			memcpy(cmd->path, imsg.data, datalen);
+		case 'c': {
+			char *h;
+			switch (*optarg) {
+			case 'j':
+				h = "Content-Type: application/json";
+				break;
+
+			case 't':
+				h = "Content-Type: text/plain";
+				break;
+
+			case 'x':
+				h = "Content-Type: application/xml";
+				break;
+
+			default:
+				err(1, "-c: unknown value %s", optarg);
+			}
+			csend(&ibuf, IMSG_SET_HEADER, h, strlen(h));
 			break;
+		}
 
-		case IMSG_SET_PAYLOAD:
-			cmd->payload = calloc(datalen + 1, 1);
-			if (cmd->payload == NULL)
-				err(1, "calloc");
-			memcpy(cmd->payload, imsg.data, datalen);
-			break;
+		case 'h': {
+			char *hdr = NULL;
+			int len;
 
-		case IMSG_DO_REQ:
-			child_do_req(ibuf, cmd);
+			len = asprintf(&hdr, "Host: %s", optarg);
+			if (len == -1)
+				err(1, "asprintf");
 
-			free(cmd->path);
-			if (cmd->payload != NULL)
-				free(cmd->payload);
-			cmd->path = cmd->payload = NULL;
+			csend(&ibuf, IMSG_SET_HEADER, hdr, len);
+			free(hdr);
 
 			break;
 		}
 
-		imsg_free(&imsg);
-	}
-
-	return 1;
-}
-
-int
-child_main(struct imsgbuf *ibuf)
-{
-	struct cmd cmd;
-
-	memset(&cmd, 0, sizeof(struct cmd));
-
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-
-	for (;;)
-		if (process_messages(ibuf, &cmd))
+		case 'i':
+			csend(&ibuf, IMSG_SET_PEER_VERIF, &(int) { 1 },
+				sizeof(int));
 			break;
 
-	svec_free(headers);
-	curl_global_cleanup();
+		case 'p': {
+			size_t len;
+			if ((len = strlen(optarg)) == 0)
+				errx(1, "prefix is empty");
+			csend(&ibuf, IMSG_SET_PREFIX, optarg, len);
+			break;
+		}
+
+		case 'v':
+			settings.verbose++;
+			break;
+
+		default:
+			usage();
+			return 1;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	for (i = 0; i < argc; ++i) {
+		FILE *f;
+
+		if ((f = fopen(argv[i], "r")) == NULL)
+			err(1, "%s", argv[i]);
+
+		repl(&ibuf, f);
+
+		fclose(f);
+	}
+
+	repl(&ibuf, stdin);
+	csend(&ibuf, IMSG_EXIT, NULL, 0);
+	wait(NULL);
 
 	return 0;
 }

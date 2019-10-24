@@ -22,15 +22,14 @@
 #include "crest.h"
 
 ssize_t
-readline_wp(char **restrict lineptr, size_t *restrict n,
-	const char *restrict prompt)
+rlp(char **lineptr, size_t *n, const char *prompt, FILE *in)
 {
-	if (isatty(0)) {
+	if (isatty(fileno(in))) {
 		printf("%s", prompt);
 		fflush(stdout);
 	}
 
-	return getline(lineptr, n, stdin);
+	return getline(lineptr, n, in);
 }
 
 int

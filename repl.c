@@ -66,6 +66,11 @@ safe_println(const char *text, size_t len)
 	char *s;
 	size_t slen;
 
+	if (text == NULL) {
+		putchar('\n');
+		return;
+	}
+
 	slen = len * 4 + 1;
 
 	if ((s = calloc(slen, 1)) == NULL)
@@ -152,7 +157,7 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 }
 
 int
-exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
+exec_req(struct imsgbuf *ibuf, const struct req *req, struct resp *r)
 {
 	size_t pathlen, paylen;
 	ssize_t n, datalen;
@@ -162,17 +167,17 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
 
 	pathlen = paylen = 0;
 
-	pathlen = strlen(cmd->path);
-	if (cmd->payload != NULL)
-		paylen = strlen(cmd->payload);
+	pathlen = strlen(req->path);
+	if (req->payload != NULL)
+		paylen = strlen(req->payload);
 
 	if (pathlen >= UINT16_MAX || paylen >= UINT16_MAX)
 		err(1, "url or payload too big");
 
-	imsg_compose(ibuf, IMSG_SET_METHOD, 0, 0, -1, &cmd->method,
+	imsg_compose(ibuf, IMSG_SET_METHOD, 0, 0, -1, &req->method,
 		sizeof(enum http_methods));
-	imsg_compose(ibuf, IMSG_SET_URL, 0, 0, -1, cmd->path, pathlen);
-	imsg_compose(ibuf, IMSG_SET_PAYLOAD, 0, 0, -1, cmd->payload, paylen);
+	imsg_compose(ibuf, IMSG_SET_URL, 0, 0, -1, req->path, pathlen);
+	imsg_compose(ibuf, IMSG_SET_PAYLOAD, 0, 0, -1, req->payload, paylen);
 	imsg_compose(ibuf, IMSG_DO_REQ, 0, 0, -1, NULL, 0);
 
 	/* retry on errno == EAGAIN? */
@@ -204,55 +209,71 @@ exec_req(struct imsgbuf *ibuf, const struct cmd *cmd, struct resp *r)
 }
 
 int
-repl(struct imsgbuf *ibuf)
+repl(struct imsgbuf *ibuf, FILE *in)
 {
 	struct cmd cmd;
 	struct resp r;
 
 	char *line = NULL;
 	size_t linesize = 0;
-	ssize_t linelen = 0;
+	ssize_t len = 0;
 
 	memset(&r, 0, sizeof(struct resp));
 
-	while ((linelen = readline_wp(&line, &linesize, PROMPT)) != -1) {
-		line[linelen - 1] = '\0';
-
-		if (!strcmp(line, "help") || !strcmp(line, "usage")) {
-			usage();
-			continue;
-		}
-
-		if (!strcmp(line, "quit") || !strcmp(line, "exit"))
-			break;
+	while ((len = rlp(&line, &linesize, settings.prompt.s, in)) != -1) {
+		line[len - 1] = '\0';
 
 		if (*line == '|') {
 			do_pipe(line + 1, r.body, r.blen);
 			continue;
 		}
 
-		cmd.path = NULL;
-		cmd.payload = NULL;
+		memset(&cmd, 0, sizeof(struct cmd));
 		if (!parse(line, &cmd)) {
-			if (cmd.path != NULL)
-				free(cmd.path);
-			if (cmd.payload != NULL)
-				free(cmd.payload);
+			if (cmd.type == CMD_REQ && cmd.req.path != NULL)
+				free(cmd.req.path);
+			if (cmd.type == CMD_REQ && cmd.req.payload != NULL)
+				free(cmd.req.payload);
 			continue;
 		}
 
-		if (verbose > 2)
-			warnx("{ method=%d, path=%s, payload=%s }",
-				cmd.method, cmd.path, cmd.payload);
+		switch (cmd.type) {
+		case CMD_REQ:
+			free_resp(&r);
+			exec_req(ibuf, &cmd.req, &r);
 
-		free_resp(&r);
+			free(cmd.req.path);
+			if (cmd.req.payload != NULL)
+				free(cmd.req.payload);
+			break;
 
-		exec_req(ibuf, &cmd, &r);
+		case CMD_SET:
+			warnx("setting %d", cmd.opt.set);
+			csend(ibuf, cmd.opt.set, cmd.opt.value, cmd.opt.len);
 
-		free(cmd.path);
-		if (cmd.payload != NULL)
-			free(cmd.payload);
+			if (cmd.opt.set == IMSG_SET_PORT)
+				free(cmd.opt.value);
+			break;
+
+		case CMD_SPECIAL:
+			switch (cmd.sp) {
+			case SC_HELP:
+				usage();
+				break;
+			case SC_QUIT:
+				goto end;
+				break;
+			case SC_VERSION:
+				warnx("version ?");
+				break;
+			}
+			break;
+
+		default:
+			err(1, "invalid cmd.type %d", cmd.type);
+		}
 	}
+end:
 
 	free_resp(&r);
 

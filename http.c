@@ -32,8 +32,8 @@ init_res(struct write_result *res)
 {
 	memset(res, 0, sizeof(struct write_result));
 
-	res->data = calloc(BUFFER_SIZE, 1);
-	res->size = BUFFER_SIZE;
+	res->data = calloc(settings.bufsize, 1);
+	res->size = settings.bufsize;
 	res->pos = 0;
 
 	if (res->data == NULL)
@@ -103,22 +103,24 @@ write_res(void *ptr, size_t size, size_t nmemb, void *s)
 }
 
 static char *
-do_url(const struct cmd *cmd)
+do_url(const struct req *req)
 {
-	char *u;
+	char *u, *prefix;
 	int l;
 
+	prefix = settings.prefix.s;
+
 	if (prefix == NULL)
-		return strdup(cmd->path);
+		return strdup(req->path);
 
 	/* strlen(prefix) >= 1 by main() */
 
-	if (*cmd->path == '/' && prefix[strlen(prefix) - 1] == '/')
-		l = asprintf(&u, "%s%s", prefix, cmd->path + 1);
-	else if (*cmd->path == '/' || prefix[strlen(prefix) - 1] == '/')
-		l = asprintf(&u, "%s%s", prefix, cmd->path);
+	if (*req->path == '/' && prefix[strlen(prefix) - 1] == '/')
+		l = asprintf(&u, "%s%s", prefix, req->path + 1);
+	else if (*req->path == '/' || prefix[strlen(prefix) - 1] == '/')
+		l = asprintf(&u, "%s%s", prefix, req->path);
 	else
-		l = asprintf(&u, "%s/%s", prefix, cmd->path);
+		l = asprintf(&u, "%s/%s", prefix, req->path);
 
 	if (l == -1) {
 		warn("asprintf");
@@ -129,7 +131,7 @@ do_url(const struct cmd *cmd)
 }
 
 int
-do_cmd(const struct cmd *cmd, struct resp *resp)
+do_req(const struct req *req, struct resp *resp, struct svec *headers)
 {
 	CURL *curl;
 	CURLcode code;
@@ -145,7 +147,7 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 
 	memset(resp, 0, sizeof(struct resp));
 
-	if ((url = do_url(cmd)) == NULL)
+	if ((url = do_url(req)) == NULL)
 		return 0;
 
 	if ((curl = curl_easy_init()) == NULL) {
@@ -153,13 +155,13 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 		goto fail;
 	}
 
-	switch (cmd->method) {
+	switch (req->method) {
 	case DELETE:
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 
-		if (cmd->payload != NULL)
+		if (req->payload != NULL)
 			curl_easy_setopt(
-				curl, CURLOPT_POSTFIELDS, cmd->payload);
+				curl, CURLOPT_POSTFIELDS, req->payload);
 		break;
 
 	case GET:
@@ -175,13 +177,13 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 		/* by RFC 7231 if a payload is present, we MUST send a
 		 * Content-Type.  We don't have still a way to define
 		 * the Content-Type of the request, so... */
-		if (cmd->payload != NULL)
+		if (req->payload != NULL)
 			warnx("ignoring payload for OPTIONS\n");
 		break;
 
 	case POST:
 		curl_easy_setopt(curl, CURLOPT_POST, 1);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, cmd->payload);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req->payload);
 		break;
 
 	case CONNECT:
@@ -190,27 +192,27 @@ do_cmd(const struct cmd *cmd, struct resp *resp)
 	case TRACE:
 	default:
 		warnx("method %s not (yet) supported",
-			method2str(cmd->method));
+			method2str(req->method));
 		goto fail;
 	}
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, USERAGENT);
-	curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, http_version);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, settings.useragent);
+	curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, settings.http_version);
 
-	if (port != -1) /* port is in valid range due to main(), or is
-			   -1 */
-		curl_easy_setopt(curl, CURLOPT_PORT, port);
+	/* port is in valid range due to main(), or is -1 */
+	if (settings.port != -1)
+		curl_easy_setopt(curl, CURLOPT_PORT, settings.port);
 
-	if (skip_peer_verification)
+	if (settings.skip_peer_verification)
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
 	init_res(&hdr);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &write_res_header);
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &hdr);
 
-	if (cmd->method == HEAD)
+	if (req->method == HEAD)
 		memset(&res, 0, sizeof(struct write_result));
 	else
 		init_res(&res);
