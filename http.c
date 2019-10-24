@@ -136,7 +136,7 @@ do_req(const struct req *req, struct resp *resp, struct svec *headers)
 	CURL *curl;
 	CURLcode code;
 	char *url;
-	int r, ret;
+	int ret;
 	struct write_result hdr, res;
 	struct curl_slist *hdrs;
 
