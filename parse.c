@@ -119,7 +119,7 @@ parse_set(const char *i, struct cmd *cmd)
 		}
 	}
 
-	/* check if we matched a method */
+	/* check if we matched an option */
 	v = 0;
 	for (k = 0; k < n; ++k) {
 		if (opts[k] != NULL && opts[k][j] == '\0') {
