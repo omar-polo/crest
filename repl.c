@@ -247,7 +247,6 @@ repl(struct imsgbuf *ibuf, FILE *in)
 			break;
 
 		case CMD_SET:
-			warnx("setting %d", cmd.opt.set);
 			csend(ibuf, cmd.opt.set, cmd.opt.value, cmd.opt.len);
 
 			if (cmd.opt.set == IMSG_SET_PORT)
