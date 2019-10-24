@@ -160,8 +160,7 @@ int
 exec_req(struct imsgbuf *ibuf, const struct req *req, struct resp *r)
 {
 	size_t pathlen, paylen;
-	ssize_t n, datalen;
-	int rtype;
+	ssize_t n;
 
 	memset(r, 0, sizeof(struct resp));
 
