@@ -28,12 +28,12 @@
 #include "crest.h"
 
 const char *prgname;
-struct settings settings;
+const char *prompt;
 
 void
 usage()
 {
-	printf("USAGE: %s [-iv] [-H header] [-P port] [-V http version] "
+	printf("USAGE: %s [-i] [-H header] [-P port] [-V http version] "
 	       "[-c jtx] [-h host] [-p prefix] files...\n",
 		prgname);
 }
@@ -44,14 +44,8 @@ main(int argc, char **argv)
 	int ch, imsg_fds[2], i;
 	struct imsgbuf ibuf, child_ibuf;
 
-	memset(&settings, 0, sizeof(struct settings));
-	settings.bufsize = 256 * 1024; /* 256 kb */
-	settings.prompt = LITERAL_STR("> ");
-	settings.useragent = LITERAL_STR("cREST/0.1");
-	settings.http_version = CURL_HTTP_VERSION_2TLS;
-	settings.port = -1;
-
 	prgname = *argv;
+	prompt = "> ";
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, imsg_fds) == -1)
 		err(1, "socketpair");
@@ -76,7 +70,7 @@ main(int argc, char **argv)
 	close(imsg_fds[1]);
 	imsg_init(&ibuf, imsg_fds[0]);
 
-	while ((ch = getopt(argc, argv, "ivH:P:V:c:h:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "iH:P:V:c:h:p:")) != -1) {
 		switch (ch) {
 		case 'H':
 			csend(&ibuf, IMSG_SET_HEADER, optarg, strlen(optarg));
@@ -84,49 +78,49 @@ main(int argc, char **argv)
 
 		case 'P': {
 			const char *errstr = NULL;
+			long port = 0;
 
-			settings.port = strtonum(optarg, 1, 65535, &errstr);
+			port = strtonum(optarg, 1, 65535, &errstr);
 			if (errstr != NULL)
 				errx(1, "port is %s: %s", errstr, optarg);
-			csend(&ibuf, IMSG_SET_PORT, &settings.port,
-				sizeof(settings.port));
+			csend(&ibuf, IMSG_SET_PORT, &port, sizeof(long));
 			break;
 		}
 
-		case 'V':
+		case 'V': {
+			long ver;
+
 			switch (*optarg) {
 			case '0':
-				settings.http_version = CURL_HTTP_VERSION_1_0;
+				ver = CURL_HTTP_VERSION_1_0;
 				break;
 
 			case '1':
-				settings.http_version = CURL_HTTP_VERSION_1_1;
+				ver = CURL_HTTP_VERSION_1_1;
 				break;
 
 			case '2':
-				settings.http_version = CURL_HTTP_VERSION_2;
+				ver = CURL_HTTP_VERSION_2;
 				break;
 
 			case 'T':
-				settings.http_version
-					= CURL_HTTP_VERSION_2TLS;
+				ver = CURL_HTTP_VERSION_2TLS;
 				break;
 
 			case '3':
-				settings.http_version = CURL_HTTP_VERSION_3;
+				ver = CURL_HTTP_VERSION_3;
 				break;
 
 			case 'X':
-				settings.http_version
-					= CURL_HTTP_VERSION_NONE;
+				ver = CURL_HTTP_VERSION_NONE;
 				break;
 
 			default:
 				errx(1, "-V: unknown value %s", optarg);
 			}
-			csend(&ibuf, IMSG_SET_HTTPVER, &settings.http_version,
-				sizeof(settings.http_version));
+			csend(&ibuf, IMSG_SET_HTTPVER, &ver, sizeof(long));
 			break;
+		}
 
 		case 'c': {
 			char *h;
@@ -176,10 +170,6 @@ main(int argc, char **argv)
 			csend(&ibuf, IMSG_SET_PREFIX, optarg, len);
 			break;
 		}
-
-		case 'v':
-			settings.verbose++;
-			break;
 
 		default:
 			usage();

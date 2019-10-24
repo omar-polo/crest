@@ -23,8 +23,6 @@
 #include <compat.h>
 #include <imsg.h>
 
-extern const char *prgname;
-
 enum imsg_type {
 
 	/* parent -> child
@@ -168,16 +166,16 @@ struct svec {
 
 struct settings {
 	size_t bufsize;
-	struct str prompt;
 	struct str useragent;
 	struct str prefix;
 	long http_version;
 	long port; /* it's -1 or uint16_t in reality */
-	int verbose;
 	int skip_peer_verification;
 };
 
 extern struct settings settings;
+extern const char *prgname;
+extern const char *prompt;
 
 void		 usage();
 

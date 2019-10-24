@@ -246,7 +246,7 @@ repl(struct imsgbuf *ibuf, FILE *in)
 
 	memset(&r, 0, sizeof(struct resp));
 
-	while ((len = rlp(&line, &linesize, settings.prompt.s, in)) != -1) {
+	while ((len = rlp(&line, &linesize, prompt, in)) != -1) {
 		line[len - 1] = '\0';
 
 		if (*line == '|') {

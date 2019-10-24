@@ -30,6 +30,8 @@ struct svec *headers;
 		h = t;                                                       \
 	} while (0)
 
+struct settings settings;
+
 /* wrapper around imsg_compose to send a message to the child.  It will
  * implicitly write */
 void
@@ -150,8 +152,6 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 
 		switch (imsg.hdr.type) {
 		case IMSG_EXIT:
-			if (settings.verbose > 2)
-				warnx("child: exiting");
 			done = 1;
 			break;
 
@@ -265,6 +265,12 @@ child_main(struct imsgbuf *ibuf)
 
 	memset(&req, 0, sizeof(struct req));
 
+	memset(&settings, 0, sizeof(struct settings));
+	settings.bufsize = 256 * 1024; /* 256 kb */
+	settings.useragent = LITERAL_STR("cREST/0.1");
+	settings.http_version = CURL_HTTP_VERSION_2TLS;
+	settings.port = -1;
+
 	headers = NULL;
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -276,7 +282,6 @@ child_main(struct imsgbuf *ibuf)
 	svec_free(headers);
 	curl_global_cleanup();
 
-	FREE_STR(settings.prompt);
 	FREE_STR(settings.useragent);
 	FREE_STR(settings.prefix);
 
