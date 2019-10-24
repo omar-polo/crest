@@ -1,5 +1,5 @@
 CC	?= cc
-CFLAGS	 = `pkg-config --cflags libcurl` -g -D_GNU_SOURCE -Icompat
+CFLAGS	 = `pkg-config --cflags libcurl` -g -D_GNU_SOURCE -Icompat -Wall
 LDFLAGS	 = `pkg-config --libs   libcurl`
 
 .PHONY: all clean
@@ -21,4 +21,5 @@ crest: ${OBJS} ${COMPAT}
 
 .SUFFIXES: .c .o
 .c.o:
-	${CC} ${CFLAGS} -c $< -o $@
+	@echo '  CC	$<'
+	@${CC} ${CFLAGS} -c $< -o $@
