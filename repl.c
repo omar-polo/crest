@@ -249,6 +249,12 @@ repl(struct imsgbuf *ibuf, FILE *in)
 	while ((len = rlp(&line, &linesize, prompt, in)) != -1) {
 		line[len - 1] = '\0';
 
+		if (*line == '#') /* ignore comments */
+			continue;
+
+		if (len == 1) /* ignore empty lines (i.e. only a \n) */
+			continue;
+
 		if (*line == '|') {
 			do_pipe(line + 1, r.body, r.blen);
 			continue;
