@@ -169,6 +169,11 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 			break;
 
 		case IMSG_SET_PAYLOAD:
+			if (datalen == 0) {
+				req->payload = NULL;
+				break;
+			}
+
 			req->payload = calloc(datalen + 1, 1);
 			if (req->payload == NULL)
 				err(1, "calloc");
