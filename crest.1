@@ -1,0 +1,176 @@
+.\" Copyright (c) 2019 Omar Polo <op@xglobe.in>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 24, 2019
+.Dt CREST 1
+.Os
+.Sh NAME
+.Nm crest
+.Nd Small repl to test REST endpoints
+.Sh SYNOPSYS
+.Nm
+.Bk -words
+.Op Fl i
+.Op Fl H Ar header
+.Op Fl P Ar port
+.Op Fl V Ar http version
+.Op Fl c Ar jtx
+.Op Fl h Ar host
+.Op Fl p Ar prefix
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+is an interactive processor to send HTTP requests.  It takes input on
+the command line: first it process the files given as argument, then
+reads the standard input.
+
+Options available:
+.Bl -tag
+.It Fl i
+do not verify the authenticity of the peer's certificate.
+.It Fl H
+set an extra HTTP header to include in the request
+.It Fl P
+set the port.  It's only necessary to do this explicitly if you want to
+send the requests to a server listening on a non-standard port and you
+don't specify the port implicitly in the url or with a prefix.
+.It Fl V
+set the http version to use.  The possible values are:
+.Bl -tag
+.It 0
+for HTTP/1.0
+.It 1
+for HTTP/1.1
+.It 2
+for HTTP/2
+.It T
+for HTTP/2 over TLS only (the default.)
+.It 3
+for HTTP/3
+.It X
+for "I don't care about the version"
+.El
+
+Please note that
+.Nm
+can (and probably will) fall back to HTTP/1.1 if HTTP2 can't be
+negotiated.  This behavior is due to libcurl, see
+.Xr CURLOPT_HTTP_VERSION 3
+for more information.
+.It Fl c
+is a short-hand to declare the Content-Type header.  The possible
+values are:
+.Bl -tag
+.It j
+for "Content-Type: application/json"
+.It t
+for "Content-Type: text/plain"
+.It x
+for "Content-Type: application/xml"
+.El
+.It Fl h
+is a hort-hand for the "Host" header
+.It Fl p
+set the the prefix.  The prefix is a string that is appended
+.Sy before
+every url.  Will be guaranteed that
+.Sy only
+a slash will be present between the prefix and the url (i.e. if the
+prefix is localhost:8080/ and the url is /foo the final URL will be
+localhost:8080/foo and not localhost:8080//foo)
+.El
+.Sh SYNTAX
+The syntax for
+.Nm
+is as follows: empty lines are ignored, lines starting with a # are
+comments and thus ignored and every other line is a command.
+Spaces and tabs are used to delimit commands and their arguments.
+
+The supported commands are:
+.Bl -tag
+.It Ic show Ar opt
+to show the value of an option. See the section below for the list
+of options.
+.It Ic set Ar opt Ar val
+to set the value of an option. See the section below for the list
+of options.
+.It Ic quit Ns , Ic exit
+to exit.
+.It Ic help Ns , Ic usage
+to show a brief help.
+.It | Ns Ic cmd
+where cmd is a
+.Xr sh 1
+command.  It will invoke the cmd in a shell binding its standard input
+to the body of the previously HTTP response.
+.It Em verb No Ic url Op Ar payload
+perform an HTTP request.
+.Em verb
+is one of
+.Ic delete Ns ,
+.Ic get Ns ,
+.Ic head Ns ,
+.Ic options No or
+.Ic post Ns .
+If the
+.Ic prefix
+is defined, the URL will be prefixed such that only a single slash will
+be present between the prefix and the given URL.  An optional payload
+can be provided and will be sended as-is.  Keep in mind that for some
+HTTP method the payload has not defined semantic (see RFC 7231.)
+.El
+.Sh OPTIONS
+The following options are available for the
+.Ic set No and Ic show No commands:
+.Bl -tag
+.It Ic headers
+Add a custom header to the following requests.
+.It Ic header
+synonim for
+.Ic headers
+.It Ic useragent
+The value for the user agent.
+.It Ic prefix
+The prefix
+.It Ic http
+The HTTP version.  Accepted values are:
+.Bl -tag
+.It 1.0
+.It 1.1
+.It 2
+.It 2TLS
+means HTTP/2 only through TLS.  Can degrade to HTTP/1.1.  This is the
+default value.
+.It 3
+for HTTP/3.
+.It none
+to let libcurl choose the version by itself.
+.El
+.It Ic http-version
+Alias for
+.Ic http
+.It Ic port
+The port
+.It Ic peer-verification
+Enable or disable the verification of the peer certificate.  Accepted
+values are
+.Ar on No or Ar true
+to enable it or
+.Ar off No or Ar false No to disable it.  Defaults to
+.Ar on Ns .
+.El
+.Sh SEE ALSO
+.Xr curl 1
+.Sh AUTHORS
+.An Omar Polo <op@xglobe.in>
