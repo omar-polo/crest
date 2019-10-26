@@ -174,3 +174,14 @@ to enable it or
 .Xr curl 1
 .Sh AUTHORS
 .An Omar Polo <op@xglobe.in>
+.Sh CAVEATS
+.Bl -bullet
+.It
+The headers and bodies of the replies will be passed through
+.Xr vis 3
+before they're printed to the user.  This is to ensure that no
+.Dq funny
+sequences of character can mess up the user terminal.  If you want to
+obtain the raw body you can use the pipe command (i.e. |cat should print
+the last body as-is to standard output.)
+.El
