@@ -140,6 +140,7 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 		err(1, "imsg_read");
 	if (n == 0)
 		errx(1, "connection closed");
+
 	done = 0;
 	for (; !done;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -280,9 +281,8 @@ child_main(struct imsgbuf *ibuf)
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
-	for (;;)
-		if (process_messages(ibuf, &req))
-			break;
+	while (!process_messages(ibuf, &req))
+		; /* no op */
 
 	svec_free(headers);
 	curl_global_cleanup();
