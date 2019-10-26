@@ -1,8 +1,9 @@
 CC	?= cc
 CFLAGS	 = `pkg-config --cflags libcurl` -g -D_GNU_SOURCE -Icompat -Wall
 LDFLAGS	 = `pkg-config --libs   libcurl`
+PREFIX	?= /usr/local
 
-.PHONY: all clean
+.PHONY: all clean install uninstall
 
 all: crest
 
@@ -23,3 +24,12 @@ crest: ${OBJS} ${COMPAT}
 .c.o:
 	@echo '  CC	$<'
 	@${CC} ${CFLAGS} -c $< -o $@
+
+# -D is non standard but accepted by GNU and OpenBSD install(1).
+install: crest
+	install -Dm 0755 crest ${DESTDIR}${PREFIX}/bin
+	install -Dm 0644 crest.1 ${DESTDIR}${PREFIX}/man/man1
+
+uninstall:
+	rm ${DESTDIR}${PREFIX}/bin/crest
+	rm ${DESTDIR}${PREFIX}/man/man1/crest.1
