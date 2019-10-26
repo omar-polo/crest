@@ -67,8 +67,8 @@ The makefile will honor `${PREFIX}` and `${DESTDIR}`.
 ### Architecture
 
 `crest` will `fork(2)` as soon as it can: the parent process will do
-user interaction (reading commands, parsing, executing pipes) while
-the child process will do the HTTP calls.  On OpenBSD the process are
+user interaction (reading commands, parsing, executing pipes) while the
+child process will do the HTTP calls.  On OpenBSD the processes are
 `pledge(2)`ed and the child is also `unveil(2)`ed (it needs to open
 files in /etc/ssl to verify TLS certificates.)
 
