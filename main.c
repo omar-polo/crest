@@ -64,7 +64,7 @@ main(int argc, char **argv)
 		return child_main(&child_ibuf);
 	}
 
-	if (pledge("stdio proc exec", NULL) == -1)
+	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	close(imsg_fds[1]);
