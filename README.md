@@ -32,11 +32,20 @@ and post.
 
 `crest` has also some options that can be changed at runtime.  In the
 previous example I used `set prefix localhost:8080` to set the option
-`prefix` (that is equilent to set the `-p` flag by the way.)  There are
+`prefix` (that is equivalent to set the `-p` flag by the way.)  There are
 other options documented in the manpage, like the HTTP version, the port
-and so on.
+and so on.  The `show` command is used to print the value of an option.
 
-Lastly, the `show` command is used to print the value of an option.
+Lastly, `crest` has `sh(1)`-like pipes:
+
+	get /user/5
+	
+	# this will execute jid with the output of the last
+	# command as input
+	|jid
+
+(be sure to try [jid][jid] if you're working with json APIs: the whole
+idea of pipes was implemented just to leverage jid amazingness.)
 
 ### Building
 
@@ -54,6 +63,18 @@ To uninstall, execute `make uninstall` or simply remove the binary and
 the manpage.  No other files will be installed.
 
 The makefile will honor `${PREFIX}` and `${DESTDIR}`.
+
+### Architecture
+
+`crest` will `fork(2)` as soon as it can: the parent process will do
+user interaction (reading commands, parsing, executing pipes) while
+the child process will do the HTTP calls.  On OpenBSD the process are
+`pledge(2)`ed and the child is also `unveil(2)`ed (it needs to open
+files in /etc/ssl to verify TLS certificates.)
+
+The communication between the parent and the child is done through
+OpenBSD' [imsg][imsg] functions (they're bundled in the `compat`
+directory.)
 
 ### TODOs
 
@@ -83,4 +104,6 @@ exception being `compat/queue.h` and `compat/vis.{c,h}` that are under
 BSD 3-clause.  All copyright notices are in the first lines of each
 source file.
 
+[imsg]: http://man.openbsd.org/imsg_init
+[jid]: https://github.com/simeji/jid
 [manpage]: crest.1.md
