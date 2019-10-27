@@ -30,11 +30,20 @@ separate the prefix and the given URL.
 At the moment the method supported are delete, get, head, options
 and post.
 
+Headers can be added and removed with the `add` and `del` commands:
+
+	# add a custom header, just like the -H flag
+	add X-My: header
+	
+	# remove that header
+	del X-My
+
 `crest` has also some options that can be changed at runtime.  In the
 previous example I used `set prefix localhost:8080` to set the option
 `prefix` (that is equivalent to set the `-p` flag by the way.)  There are
 other options documented in the manpage, like the HTTP version, the port
-and so on.  The `show` command is used to print the value of an option.
+and so on.  The `show` command is used to print the value of an option
+and `unset` will reset that option.
 
 Lastly, `crest` has `sh(1)`-like pipes:
 
