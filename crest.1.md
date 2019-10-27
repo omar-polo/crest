@@ -117,13 +117,17 @@ The supported commands are:
 
 **show** *opt*
 
-> to show the value of an option. See the section below for the list
+> to show the value of an option.  See the section below for the list
 > of options.
 
 **set** *opt* *val*
 
-> to set the value of an option. See the section below for the list
+> to set the value of an option.  See the section below for the list
 > of options.
+
+**unset** *opt*
+
+> unset an option.
 
 **add** *header*
 

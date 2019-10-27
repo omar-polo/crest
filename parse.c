@@ -284,6 +284,61 @@ parse_set(const char *i, struct cmd *cmd)
 }
 
 static int
+parse_unset(const char *i, struct cmd *cmd)
+{
+	/* grammar:
+	 *	unset opt1
+	 */
+	const char *opt;
+
+	assert(strsw(i, "unset"));
+
+	i += 5; /* skip the "unset" */
+
+	if (!parse_setting(&i, &opt, &cmd->opt.set))
+		return 0;
+
+	if (cmd->opt.set == IMSG_ADD) {
+		warnx("cannot unset headers.");
+		return 0;
+	}
+
+	switch (cmd->opt.set) {
+	case IMSG_SET_UA:
+	case IMSG_SET_PREFIX:
+		cmd->opt.value = NULL;
+		cmd->opt.len = 0;
+		return 1;
+
+	case IMSG_SET_HTTPVER:
+		cmd->opt.len = sizeof(long);
+		cmd->opt.value = &curl_http_versions[5]; /* none */
+		return 1;
+
+	case IMSG_SET_PORT: {
+		long *port;
+
+		if ((port = malloc(sizeof(long))) == NULL)
+			err(1, "malloc");
+
+		*port = -1;
+
+		cmd->opt.value = port;
+		cmd->opt.len = sizeof(long);
+		return 1;
+	}
+
+	case IMSG_SET_PEER_VERIF:
+		cmd->opt.value = &bools[1];
+		cmd->opt.len = sizeof(int);
+		return 1;
+
+	default:
+		err(1, "imsg type %d shouldn't be accessible", cmd->opt.set);
+	}
+}
+
+static int
 parse_add(const char *i, struct cmd *cmd)
 {
 	assert(strsw(i, "add"));
@@ -416,6 +471,11 @@ parse(const char *i, struct cmd *cmd)
 	if (strsw(i, "set")) {
 		cmd->type = CMD_SET;
 		return parse_set(i, cmd);
+	}
+
+	if (strsw(i, "unset")) {
+		cmd->type = CMD_SET;
+		return parse_unset(i, cmd);
 	}
 
 	if (strsw(i, "show")) {
