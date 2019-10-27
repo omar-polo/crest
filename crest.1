@@ -40,7 +40,8 @@ Options available:
 .It Fl i
 do not verify the authenticity of the peer's certificate.
 .It Fl H
-set an extra HTTP header to include in the request
+set an extra HTTP header to include in the request.  Can be provided
+more than once.
 .It Fl P
 set the port.  It's only necessary to do this explicitly if you want to
 send the requests to a server listening on a non-standard port and you
@@ -91,10 +92,9 @@ prefix is localhost:8080/ and the url is /foo the final URL will be
 localhost:8080/foo and not localhost:8080//foo)
 .El
 .Sh SYNTAX
-The syntax for
 .Nm
-is as follows: empty lines are ignored, lines starting with a # are
-comments and thus ignored and every other line is a command.
+process its input line by line.  Empty lines are ignored, lines starting
+with a # are comments and thus ignored and every other line is a command.
 Spaces and tabs are used to delimit commands and their arguments.
 
 The supported commands are:
@@ -110,7 +110,8 @@ unset an option.
 .It Ic add Ar header
 to add a custom header
 .It Ic del Ar header
-to delete a header previously added with add
+to delete a header previously added with
+.Ar add
 .It Ic quit Ns , Ic exit
 to exit.
 .It Ic help Ns , Ic usage
@@ -138,10 +139,10 @@ HTTP method the payload has not defined semantic (see RFC 7231.)
 .El
 .Sh OPTIONS
 The following options are available for the
-.Ic set No and Ic show No commands:
+.Ic set Ns , Ic unset No and Ic show No commands:
 .Bl -tag
 .It Ic headers
-Read only.  All the headers added.
+All the headers added.  Read only.
 .It Ic useragent
 The value for the user agent.
 .It Ic prefix

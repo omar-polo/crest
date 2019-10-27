@@ -31,7 +31,8 @@ Options available:
 
 **-H**
 
-> set an extra HTTP header to include in the request
+> set an extra HTTP header to include in the request.  Can be provided
+> more than once.
 
 **-P**
 
@@ -107,10 +108,9 @@ Options available:
 
 # SYNTAX
 
-The syntax for
 **crest**
-is as follows: empty lines are ignored, lines starting with a # are
-comments and thus ignored and every other line is a command.
+process its input line by line.  Empty lines are ignored, lines starting
+with a # are comments and thus ignored and every other line is a command.
 Spaces and tabs are used to delimit commands and their arguments.
 
 The supported commands are:
@@ -135,7 +135,8 @@ The supported commands are:
 
 **del** *header*
 
-> to delete a header previously added with add
+> to delete a header previously added with
+> *add*
 
 **quit**, **exit**
 
@@ -172,11 +173,11 @@ The supported commands are:
 # OPTIONS
 
 The following options are available for the
-**set** and **show** commands:
+**set**, **unset** and **show** commands:
 
 **headers**
 
-> Read only.  All the headers added.
+> All the headers added.  Read only.
 
 **useragent**
 
