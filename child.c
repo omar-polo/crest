@@ -85,7 +85,10 @@ static void
 show(enum imsg_type t)
 {
 	switch (t) {
-	case IMSG_SET_HEADER: {
+	/* here we recycle IMSG_ADD instead of defining a new constant
+	 * IMSG_SHOW_HEADERS or something like that.  add is used only to add
+	 * headers, so its OK */
+	case IMSG_ADD: {
 		size_t i;
 
 		if (headers == NULL)
@@ -191,15 +194,6 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 
 			break;
 
-		case IMSG_SET_HEADER: {
-			char *h;
-			if ((h = calloc(datalen + 1, 1)) == NULL)
-				err(1, "calloc");
-			memcpy(h, imsg.data, datalen);
-			HPUSH(headers, h, 1);
-			break;
-		}
-
 		case IMSG_SET_UA: {
 			char *h;
 			if ((h = calloc(datalen + 1, 1)) == NULL)
@@ -253,6 +247,15 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 			show(*(enum imsg_type *)imsg.data);
 			csend(ibuf, IMSG_DONE, NULL, 0);
 			break;
+
+		case IMSG_ADD: {
+			char *h;
+			if ((h = calloc(datalen + 1, 1)) == NULL)
+				err(1, "calloc");
+			memcpy(h, imsg.data, datalen);
+			HPUSH(headers, h, 1);
+			break;
+		}
 
 		case IMSG_DEL: {
 			char *hdr = (char *)imsg.data;

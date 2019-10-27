@@ -125,6 +125,14 @@ The supported commands are:
 > to set the value of an option. See the section below for the list
 > of options.
 
+**add** *header*
+
+> to add a custom header
+
+**del** *header*
+
+> to delete a header previously added with add
+
 **quit**, **exit**
 
 > to exit.
@@ -164,12 +172,7 @@ The following options are available for the
 
 **headers**
 
-> Add a custom header to the following requests.
-
-**header**
-
-> synonim for
-> **headers**
+> Read only.  All the headers added.
 
 **useragent**
 

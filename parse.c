@@ -107,11 +107,15 @@ static int
 parse_setting(const char **r, const char **opt, enum imsg_type *mt)
 {
 	int j, k, n, v, c;
-	const char *opts[] = { "headers", "header", "useragent", "prefix",
-		"http", "http-version", "port", "peer-verification" };
-	const enum imsg_type o2t[] = { IMSG_SET_HEADER, IMSG_SET_HEADER,
-		IMSG_SET_UA, IMSG_SET_PREFIX, IMSG_SET_HTTPVER,
-		IMSG_SET_HTTPVER, IMSG_SET_PORT, IMSG_SET_PEER_VERIF };
+
+	/* here we recycle the constant IMSG_ADD instead of defining a new
+	 * IMSG_SHOW_HEADERS, since the add command is used only for headers
+	 */
+	const char *opts[] = { "headers", "useragent", "prefix", "http",
+		"http-version", "port", "peer-verification" };
+	const enum imsg_type o2t[] = { IMSG_ADD, IMSG_SET_UA, IMSG_SET_PREFIX,
+		IMSG_SET_HTTPVER, IMSG_SET_HTTPVER, IMSG_SET_PORT,
+		IMSG_SET_PEER_VERIF };
 	const char *i;
 
 	n = sizeof(opts) / sizeof(char *);
@@ -143,7 +147,7 @@ parse_setting(const char **r, const char **opt, enum imsg_type *mt)
 		}
 	}
 	if (!v) {
-		warnx("cannot understand the option");
+		warnx("unknown option");
 		return 0;
 	}
 
@@ -195,6 +199,11 @@ parse_set(const char *i, struct cmd *cmd)
 	if (!parse_setting(&i, &opt, &cmd->opt.set))
 		return 0;
 
+	if (cmd->opt.set == IMSG_ADD) {
+		warnx("cannot set headers.");
+		return 0;
+	}
+
 	i = eat_spaces(i);
 	if (*i == '\0') {
 		warnx("missing value for set %s", opt);
@@ -204,7 +213,6 @@ parse_set(const char *i, struct cmd *cmd)
 	/* i now points to the value */
 
 	switch (cmd->opt.set) {
-	case IMSG_SET_HEADER:
 	case IMSG_SET_UA:
 	case IMSG_SET_PREFIX:
 		cmd->opt.value = (void *)i;
@@ -273,6 +281,23 @@ parse_set(const char *i, struct cmd *cmd)
 	default:
 		err(1, "imsg type %d shouldn't be accessible", cmd->opt.set);
 	}
+}
+
+static int
+parse_add(const char *i, struct cmd *cmd)
+{
+	assert(strsw(i, "add"));
+
+	i += 3; /* skip the add */
+	i = eat_spaces(i);
+
+	if (*i == '\0') {
+		warnx("missing header to add");
+		return 0;
+	}
+
+	cmd->hdrname = i;
+	return 1;
 }
 
 static int
@@ -396,6 +421,11 @@ parse(const char *i, struct cmd *cmd)
 	if (strsw(i, "show")) {
 		cmd->type = CMD_SHOW;
 		return parse_show(i, cmd);
+	}
+
+	if (strsw(i, "add")) {
+		cmd->type = CMD_ADD;
+		return parse_add(i, cmd);
 	}
 
 	if (strsw(i, "del")) {

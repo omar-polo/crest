@@ -61,10 +61,6 @@ enum imsg_type {
 	 * return the body */
 	IMSG_BODY,
 
-	/* parent -> child
-	 * set header */
-	IMSG_SET_HEADER,
-
 	/* parent -> child */
 	IMSG_SET_UA,
 
@@ -83,7 +79,12 @@ enum imsg_type {
 	/* parent -> child */
 	IMSG_SHOW,
 
-	/* parent -> child */
+	/* parent -> child
+	 * add header */
+	IMSG_ADD,
+
+	/* parent -> child
+	 * delete header */
 	IMSG_DEL,
 
 	/* parent <- child */
@@ -125,6 +126,7 @@ struct cmd {
 		CMD_REQ,
 		CMD_SET,
 		CMD_SHOW,
+		CMD_ADD,
 		CMD_DEL,
 		CMD_SPECIAL,
 	} type;

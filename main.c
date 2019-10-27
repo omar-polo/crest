@@ -73,7 +73,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "iH:P:V:c:h:p:")) != -1) {
 		switch (ch) {
 		case 'H':
-			csend(&ibuf, IMSG_SET_HEADER, optarg, strlen(optarg));
+			csend(&ibuf, IMSG_ADD, optarg, strlen(optarg));
 			break;
 
 		case 'P': {
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 			default:
 				err(1, "-c: unknown value %s", optarg);
 			}
-			csend(&ibuf, IMSG_SET_HEADER, h, strlen(h));
+			csend(&ibuf, IMSG_ADD, h, strlen(h));
 			break;
 		}
 
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 			if (len == -1)
 				err(1, "asprintf");
 
-			csend(&ibuf, IMSG_SET_HEADER, hdr, len);
+			csend(&ibuf, IMSG_ADD, hdr, len);
 			free(hdr);
 
 			break;

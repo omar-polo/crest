@@ -105,6 +105,10 @@ of options.
 .It Ic set Ar opt Ar val
 to set the value of an option. See the section below for the list
 of options.
+.It Ic add Ar header
+to add a custom header
+.It Ic del Ar header
+to delete a header previously added with add
 .It Ic quit Ns , Ic exit
 to exit.
 .It Ic help Ns , Ic usage
@@ -135,10 +139,7 @@ The following options are available for the
 .Ic set No and Ic show No commands:
 .Bl -tag
 .It Ic headers
-Add a custom header to the following requests.
-.It Ic header
-synonim for
-.Ic headers
+Read only.  All the headers added.
 .It Ic useragent
 The value for the user agent.
 .It Ic prefix
