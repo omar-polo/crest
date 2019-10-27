@@ -342,11 +342,10 @@ repl(struct imsgbuf *ibuf, FILE *in)
 		}
 	}
 end:
-
 	free_resp(&r);
 
 	if (line != NULL)
 		free(line);
 
-	return !ferror(stdin);
+	return !ferror(in);
 }
