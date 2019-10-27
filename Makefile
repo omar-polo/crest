@@ -25,6 +25,9 @@ crest: ${OBJS} ${COMPAT}
 	@echo '  CC	$<'
 	@${CC} ${CFLAGS} -c $< -o $@
 
+crest.1.md: crest.1
+	mandoc -T markdown -l crest.1 > crest.1.md
+
 # -D is non standard but accepted by GNU and OpenBSD install(1).
 install: crest
 	install -Dm 0755 crest ${DESTDIR}${PREFIX}/bin
