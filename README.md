@@ -90,8 +90,7 @@ random order:
  - [x] `set' command to change some parameters at runtime
  - [x] document the set command
  - [x] document that it will execute file passed as arguments
- - [ ] `add'/`del' command (or better terms?) to add/delete custom
-       HTTP headers
+ - [x] `del` command to delete HTTP headers
  - [ ] encoding & print (not so sure about this)
  - [ ] cookie support (not so sure about this)
  - [ ] support response bigger than UINT16_MAX bytes

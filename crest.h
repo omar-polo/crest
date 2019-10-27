@@ -83,6 +83,9 @@ enum imsg_type {
 	/* parent -> child */
 	IMSG_SHOW,
 
+	/* parent -> child */
+	IMSG_DEL,
+
 	/* parent <- child */
 	IMSG_DONE,
 };
@@ -118,11 +121,18 @@ enum special_cmd_type {
 };
 
 struct cmd {
-	enum {CMD_REQ, CMD_SET, CMD_SHOW, CMD_SPECIAL} type;
+	enum {
+		CMD_REQ,
+		CMD_SET,
+		CMD_SHOW,
+		CMD_DEL,
+		CMD_SPECIAL,
+	} type;
 	union {
 		struct req req;
 		struct setopt opt;
 		enum imsg_type show;
+		const char *hdrname;
 		enum special_cmd_type sp;
 	};
 };
@@ -182,6 +192,7 @@ void		 usage();
 /* parse-related stuff */
 const char	*method2str(enum http_methods);
 const char	*httpver2str(long);
+int		 strsw(const char*, const char*);
 int		 parse(const char*, struct cmd*);
 
 /* http stuff */
@@ -198,11 +209,12 @@ int		 repl(struct imsgbuf*, FILE*);
 
 /* svec related */
 struct svec	*svec_add(struct svec*, char*, int);
+int		 svec_del(struct svec*, const char*);
 void		 svec_free(struct svec*);
 struct curl_slist *svec_to_curl(struct svec*);
 
 /* child related */
 int	child_main(struct imsgbuf*);
-void	csend(struct imsgbuf*, int, void*, size_t);
+void	csend(struct imsgbuf*, int, const void*, size_t);
 
 #endif

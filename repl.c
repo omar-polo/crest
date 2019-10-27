@@ -291,6 +291,13 @@ repl(struct imsgbuf *ibuf, FILE *in)
 			wait_for_done(ibuf);
 			break;
 
+		case CMD_DEL:
+			/* copy also the NUL-terminator. */
+			csend(ibuf, IMSG_DEL, cmd.hdrname,
+				strlen(cmd.hdrname) + 1);
+			wait_for_done(ibuf);
+			break;
+
 		case CMD_SPECIAL:
 			switch (cmd.sp) {
 			case SC_HELP:

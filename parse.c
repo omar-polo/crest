@@ -91,7 +91,7 @@ eat_spaces(const char *i)
 }
 
 /* string starts with - return 1 if a starts with b */
-static int
+int
 strsw(const char *a, const char *b)
 {
 	for (;;) {
@@ -276,6 +276,23 @@ parse_set(const char *i, struct cmd *cmd)
 }
 
 static int
+parse_del(const char *i, struct cmd *cmd)
+{
+	assert(strsw(i, "del"));
+
+	i += 3; /* skip the del */
+	i = eat_spaces(i);
+
+	if (*i == '\0') {
+		warnx("missing header to delete");
+		return 0;
+	}
+
+	cmd->hdrname = i;
+	return 1;
+}
+
+static int
 parse_req(const char *i, struct cmd *cmd)
 {
 	/* grammar:
@@ -379,6 +396,11 @@ parse(const char *i, struct cmd *cmd)
 	if (strsw(i, "show")) {
 		cmd->type = CMD_SHOW;
 		return parse_show(i, cmd);
+	}
+
+	if (strsw(i, "del")) {
+		cmd->type = CMD_DEL;
+		return parse_del(i, cmd);
 	}
 
 	cmd->type = CMD_REQ;

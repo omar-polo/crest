@@ -35,7 +35,7 @@ struct settings settings;
 /* wrapper around imsg_compose to send a message to the child.  It will
  * implicitly write */
 void
-csend(struct imsgbuf *ibuf, int type, void *ptr, size_t len)
+csend(struct imsgbuf *ibuf, int type, const void *ptr, size_t len)
 {
 	ssize_t n;
 
@@ -253,6 +253,14 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 			show(*(enum imsg_type *)imsg.data);
 			csend(ibuf, IMSG_DONE, NULL, 0);
 			break;
+
+		case IMSG_DEL: {
+			char *hdr = (char *)imsg.data;
+			if (!svec_del(headers, hdr))
+				warnx("header \"%s\" not present", hdr);
+			csend(ibuf, IMSG_DONE, NULL, 0);
+			break;
+		}
 
 		default:
 			errx(1, "Unknown message type %d", imsg.hdr.type);

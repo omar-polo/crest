@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "crest.h"
 
@@ -110,6 +111,32 @@ svec_add(struct svec *svec, char *str, int dirty)
 	svec->len++;
 
 	return svec;
+}
+
+int
+svec_del(struct svec *svec, const char *hdr)
+{
+	size_t i, l;
+	char *h;
+
+	if (svec == NULL)
+		return 0;
+
+	l = strlen(hdr);
+
+	for (i = 0; i < svec->len; ++i) {
+		h = svec->d[i].s;
+		if (strsw(h, hdr) && h[l] == ':') {
+			FREE_STR(svec->d[i]);
+
+			memmove(&svec->d[i], &svec->d[i + 1],
+				(svec->len - i - 1) * sizeof(struct str));
+			svec->len--;
+
+			return 1;
+		}
+	}
+	return 0;
 }
 
 void
