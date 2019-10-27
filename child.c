@@ -104,7 +104,8 @@ show(enum imsg_type t)
 		break;
 
 	case IMSG_SET_PREFIX:
-		printf("%s\n", settings.prefix.s);
+		if (settings.prefix.s != NULL)
+			printf("%s\n", settings.prefix.s);
 		break;
 
 	case IMSG_SET_HTTPVER:
