@@ -33,17 +33,17 @@ and post.
 Headers can be added and removed with the `add` and `del` commands:
 
 	# add a custom header, just like the -H flag
-	add X-My: header
+	add Accept: text/plain
 	
 	# remove that header
-	del X-My
+	del Accept
 
-`crest` has also some options that can be changed at runtime.  In the
+`crest` has also some options that can be changed at runtime.  In a
 previous example I used `set prefix localhost:8080` to set the option
-`prefix` (that is equivalent to set the `-p` flag by the way.)  There are
-other options documented in the manpage, like the HTTP version, the port
-and so on.  The `show` command is used to print the value of an option
-and `unset` will reset that option.
+`prefix` (equivalent to the `-p` flag by the way.)  There are other
+options documented in the manpage like the HTTP version, the port and
+so on.  The `show` command is used to print the value of an option and
+`unset` will reset that option.
 
 Lastly, `crest` has `sh(1)`-like pipes:
 
@@ -54,7 +54,8 @@ Lastly, `crest` has `sh(1)`-like pipes:
 	|jid
 
 (be sure to try [jid][jid] if you're working with json APIs: the whole
-idea of pipes was implemented just to leverage jid amazingness.)
+idea of pipes was implemented just to leverage jid ability to dig into
+complex json.)
 
 ### Building
 
@@ -94,9 +95,8 @@ random order:
  - [x] DELETE, OPTIONS
  - [x] flag to define headers
  - [x] flag to choose the default HTTP version
- - [ ] flag (or something else) to hide/blacklist some/all response
-       header
- - [x] `set' command to change some parameters at runtime
+ - [ ] flag to hide/blacklist some/all response header
+ - [x] `set` command to change some parameters at runtime
  - [x] document the set command
  - [x] document that it will execute file passed as arguments
  - [x] `del` command to delete HTTP headers
