@@ -113,7 +113,7 @@ do_url(const struct req *req)
 	if (prefix == NULL)
 		return strdup(req->path);
 
-	/* strlen(prefix) >= 1 by main() */
+	/* strlen(prefix) >= 1 or prefix == NULL */
 
 	if (*req->path == '/' && prefix[strlen(prefix) - 1] == '/')
 		l = asprintf(&u, "%s%s", prefix, req->path + 1);
