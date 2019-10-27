@@ -223,8 +223,6 @@ do_req(const struct req *req, struct resp *resp, struct svec *headers)
 	hdrs = NULL;
 	if (headers != NULL) {
 		hdrs = svec_to_curl(headers);
-		if (hdrs == NULL)
-			goto fail;
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
 	}
 
