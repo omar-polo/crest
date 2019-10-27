@@ -189,8 +189,6 @@ extern struct settings settings;
 extern const char *prgname;
 extern const char *prompt;
 
-void		 usage();
-
 /* parse-related stuff */
 const char	*method2str(enum http_methods);
 const char	*httpver2str(long);

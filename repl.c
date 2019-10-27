@@ -27,6 +27,26 @@
 #include "crest.h"
 
 static void
+help()
+{
+	puts("available commands are:");
+	puts(" - set opt val : set an option");
+	puts(" - unset opt   : unset an option");
+	puts(" - show opt    : show the value of an option");
+	puts(" - add hdr     : add an header");
+	puts(" - del hdr     : delete an header");
+	puts(" - quit/exit   : to quit");
+	puts("");
+	puts("available options are:");
+	puts("  headers, useragent, prefix, http, port, peer-verification");
+	puts("");
+	puts("perform an HTTP request with: (the payload is optional)");
+	puts("  http-verb url payload");
+	puts("For example:");
+	puts("  post /user/5 {\"name\": \"foobar\"}");
+}
+
+static void
 do_pipe(char *cmd, char *data, size_t len)
 {
 	pid_t p;
@@ -306,7 +326,7 @@ repl(struct imsgbuf *ibuf, FILE *in)
 		case CMD_SPECIAL:
 			switch (cmd.sp) {
 			case SC_HELP:
-				usage();
+				help();
 				break;
 			case SC_QUIT:
 				goto end;

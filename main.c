@@ -30,7 +30,7 @@
 const char *prgname;
 const char *prompt;
 
-void
+static void
 usage()
 {
 	printf("USAGE: %s [-i] [-H header] [-P port] [-V http version] "
