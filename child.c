@@ -206,8 +206,12 @@ process_messages(struct imsgbuf *ibuf, struct req *req)
 
 		case IMSG_SET_PREFIX: {
 			char *h;
-			if (datalen == 0)
-				errx(1, "prefix cannot be empty");
+			if (datalen == 0) {
+				/* delete the prefix */
+				UPDATE_STR(settings.prefix, NULL, 0);
+				break;
+			}
+
 			if ((h = calloc(datalen + 1, 1)) == NULL)
 				err(1, "calloc");
 			memcpy(h, imsg.data, datalen);
