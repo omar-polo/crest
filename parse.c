@@ -249,14 +249,9 @@ parse_set(const char *i, struct cmd *cmd)
 		if ((port = malloc(sizeof(long))) == NULL)
 			err(1, "malloc");
 
-		*port = strtonum(i, -1, 65535, &errstr);
+		*port = strtonum(i, 1, 65535, &errstr);
 		if (errstr != NULL) {
 			warnx("port is %s: %s", errstr, i);
-			free(port);
-			return 0;
-		}
-		if (*port == 0) {
-			warnx("port is 0, must be 1-65535 or -1 to unset");
 			free(port);
 			return 0;
 		}
