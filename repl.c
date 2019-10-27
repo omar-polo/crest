@@ -347,5 +347,8 @@ end:
 	if (line != NULL)
 		free(line);
 
+	if (len == -1)
+		putchar('\n');
+
 	return !ferror(in);
 }
