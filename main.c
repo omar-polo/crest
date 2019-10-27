@@ -195,5 +195,7 @@ main(int argc, char **argv)
 	csend(&ibuf, IMSG_EXIT, NULL, 0);
 	wait(NULL);
 
+	printf("\nbye\n");
+
 	return 0;
 }
