@@ -174,6 +174,22 @@ to enable it or
 .Ar off No or Ar false No to disable it.  Defaults to
 .Ar on Ns .
 .El
+.Sh EXAMPLES
+.Nm
+doesn't read a configuration file on startup, but this limitation can
+be overcomed with a
+.Xr sh 1
+function:
+.Bd -literal -offset indent
+crest() {
+	crest "$@" ~/crestrc
+}
+.Ed
+
+Now
+.Pa ~/.crestrc
+will be executed before reading the input from the user, but after
+parsing the flags.
 .Sh SEE ALSO
 .Xr curl 1
 .Sh AUTHORS
@@ -181,11 +197,18 @@ to enable it or
 .Sh CAVEATS
 .Bl -bullet
 .It
-The headers and bodies of the replies will be passed through
+The headers and bodies of the responses will be passed through
 .Xr vis 3
 before they're printed to the user.  This is to ensure that no
 .Dq funny
 sequences of character can mess up the user terminal.  If you want to
 obtain the raw body you can use the pipe command (i.e. |cat should print
 the last body as-is to standard output.)
+.El
+.Sh BUGS
+.Bl -bullet
+.It
+.Nm
+cannot handle responses bigger than 65'535 bytes.  This is a temporary
+limit.
 .El

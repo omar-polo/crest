@@ -228,6 +228,23 @@ The following options are available for the
 > *off* or *false* to disable it. Defaults to
 > *on*.
 
+# EXAMPLES
+
+**crest**
+doesn't read a configuration file on startup, but this limitation can
+be overcomed with a
+sh(1)
+function:
+
+	crest() {
+		crest "$@" ~/crestrc
+	}
+
+Now
+*~/.crestrc*
+will be executed before reading the input from the user, but after
+parsing the flags.
+
 # SEE ALSO
 
 curl(1)
@@ -238,12 +255,18 @@ Omar Polo &lt;op@xglobe.in&gt;
 
 # CAVEATS
 
-*	The headers and bodies of the replies will be passed through
+*	The headers and bodies of the responses will be passed through
 	vis(3)
 	before they're printed to the user.  This is to ensure that no
 	"funny"
 	sequences of character can mess up the user terminal.  If you want to
 	obtain the raw body you can use the pipe command (i.e. |cat should print
 	the last body as-is to standard output.)
+
+# BUGS
+
+*	**crest**
+	cannot handle responses bigger than 65'535 bytes.  This is a temporary
+	limit.
 
 Void Linux - October 24, 2019
