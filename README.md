@@ -27,7 +27,7 @@ separate the prefix and the given URL.
 	# this is also equivalent
 	get /foo
 
-At the moment the method supported are delete, get, head, options
+At the moment the methods supported are delete, get, head, options
 and post.
 
 Headers can be added and removed with the `add` and `del` commands:
