@@ -62,15 +62,30 @@ do_pipe(char *cmd, char *data, size_t len)
 		warn("fork");
 		break;
 
-	case 0:
+	case 0: {
+		char *shell, *sh;
+
+		/* Find the path to the shell and extract the name of
+		 * the executable */
+		if ((shell = getenv("SHELL")) == NULL)
+			shell = "/bin/sh";
+		sh = strchr(shell, '\0');
+		for (; sh != shell; sh--) {
+			if (*sh == '/') {
+				sh++;
+				break;
+			}
+		}
+
 		if (dup2(fds[0], 0) == -1)
 			err(1, "dup2");
 
 		close(fds[0]);
 		close(fds[1]);
 
-		execl("/bin/sh", "sh", "-c", cmd, NULL);
+		execl(shell, sh, "-c", cmd, NULL);
 		err(1, "execl");
+	}
 
 	default:
 		write(fds[1], data, len);

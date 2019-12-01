@@ -228,6 +228,15 @@ The following options are available for the
 > *off* or *false* to disable it. Defaults to
 > *on*.
 
+# ENVIRONMENT
+
+The
+`SHELL`
+environment variable will be used to spawn commands for the pipe command.
+The shell must support a -c flag to execute a command.  If empty,
+*/bin/sh*
+will be assumed.
+
 # EXAMPLES
 
 **crest**
