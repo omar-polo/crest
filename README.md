@@ -90,7 +90,7 @@ directory.)
 
 random order:
 
- - [x] split the code into two processes and pledge(3) 'em
+ - [x] split the code into two processes and pledge(2) 'em
  - [ ] CONNECT, PATCH, PUT & TRACE.
  - [x] DELETE, OPTIONS
  - [x] flag to define headers
@@ -104,6 +104,9 @@ random order:
  - [ ] cookie support (not so sure about this)
  - [ ] support response bigger than UINT16_MAX bytes
  - [x] write a nice manpage
+ - [ ] add syntax to define field
+ - [ ] add syntax to help with managing json?
+ - [ ] use yacc to parse?
 
 ### License
 
