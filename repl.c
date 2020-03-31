@@ -276,18 +276,11 @@ repl(struct imsgbuf *ibuf, FILE *in)
 	struct resp r;
 
 	char *line = NULL;
-	size_t linesize = 0;
-	ssize_t len = 0;
 
 	memset(&r, 0, sizeof(struct resp));
 
-	while ((len = rlp(&line, &linesize, prompt, in)) != -1) {
-		line[len - 1] = '\0';
-
+	while ((line = rlf(prompt, in)) != NULL) {
 		if (*line == '#') /* ignore comments */
-			continue;
-
-		if (len == 1) /* ignore empty lines (i.e. only a \n) */
 			continue;
 
 		if (*line == '|') {
@@ -359,11 +352,10 @@ repl(struct imsgbuf *ibuf, FILE *in)
 end:
 	free_resp(&r);
 
-	if (line != NULL)
-		free(line);
-
-	if (len == -1)
+	if (line && *line == '\0')
 		putchar('\n');
+	if (line)
+		free(line);
 
 	return !ferror(in);
 }
