@@ -20,7 +20,7 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 
-#include <compat.h>
+#include "compat/compat.h"
 #include <imsg.h>
 
 enum imsg_type {
@@ -200,7 +200,7 @@ int		 do_req(const struct req*, struct resp*, struct svec*);
 void		 free_resp(struct resp*);
 
 /* print the prompt and read a line (getline(3)-style) */
-ssize_t		 rlp(char**, size_t*, const char*, FILE*);
+char		*rlf(const char*, FILE*);
 /* wait until fd becomes ready to read */
 int		 poll_read(int);
 

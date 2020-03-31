@@ -17,19 +17,68 @@
 #include <err.h>
 #include <poll.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "crest.h"
 
-ssize_t
-rlp(char **lineptr, size_t *n, const char *prompt, FILE *in)
+char *
+sgl(FILE *in)
 {
-	if (isatty(fileno(in))) {
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
+
+	if ((linelen = getline(&line, &linesize, in)) == -1)
+		return NULL;
+
+	/* trim the \n at the end */
+	if (linelen != 0)
+		line[linelen-1] = '\0';
+
+	return line;
+}
+
+#ifdef HAVE_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+char *
+rl(const char *prompt)
+{
+	char *line;
+
+	if (!strcmp(getenv("TERM"), "dumb")) {
 		printf("%s", prompt);
 		fflush(stdout);
+		return sgl(stdin);
 	}
 
-	return getline(lineptr, n, in);
+	line = readline(prompt);
+	if (line && *line)
+		add_history(line);
+
+	return line;
+}
+#else
+char *
+rl(const char *prompt)
+{
+	/* if (!strcmp(getenv("TERM"), "dumb")) { */
+		printf("%s", prompt);
+		fflush(stdout);
+		return sgl(stdin);
+	/* } */
+	/* return sgl(stdin); */
+}
+#endif
+
+char *
+rlf(const char *prompt, FILE *in)
+{
+	if (isatty(fileno(in)))
+		return rl(prompt);
+	return sgl(in);
 }
 
 int
