@@ -26,8 +26,7 @@ crest: ${OBJS} ${COMPAT}
 
 .SUFFIXES: .c .o
 .c.o:
-	@echo '  CC	$<'
-	@${CC} ${CFLAGS} -c $< -o $@
+	${CC} ${CFLAGS} -c $< -o $@
 
 crest.1.md: crest.1
 	mandoc -T markdown -l crest.1 > crest.1.md
