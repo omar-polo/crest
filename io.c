@@ -64,12 +64,9 @@ rl(const char *prompt)
 char *
 rl(const char *prompt)
 {
-	/* if (!strcmp(getenv("TERM"), "dumb")) { */
-		printf("%s", prompt);
-		fflush(stdout);
-		return sgl(stdin);
-	/* } */
-	/* return sgl(stdin); */
+	printf("%s", prompt);
+	fflush(stdout);
+	return sgl(stdin);
 }
 #endif
 
