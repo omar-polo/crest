@@ -1,11 +1,11 @@
-CC	?= cc
-CFLAGS	 = `pkg-config --cflags libcurl` -g -Wall -Icompat
-LDFLAGS	 = `pkg-config --libs libcurl`
-PREFIX	?= /usr/local
+CC =		cc
+CFLAGS =	`pkg-config --cflags libcurl` -g -Wall -Icompat
+LDFLAGS =	`pkg-config --libs libcurl`
+PREFIX =	/usr/local
 
-# to enable readline support, uncomment the following two lines
-# CFLAGS  += -DHAVE_READLINE
-# LDFLAGS += -lreadline
+# to disable readline support, comment the following two lines
+CFLAGS  += -DHAVE_READLINE
+LDFLAGS += -lreadline
 
 .PHONY: all clean install uninstall
 
