@@ -12,17 +12,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 24, 2019
+.Dd $Mdocdate$
 .Dt CREST 1
 .Os
 .Sh NAME
 .Nm crest
 .Nd Small repl to test REST endpoints
-.Sh SYNOPSYS
+.Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl A
-.Op Fl i
+.Op Fl Ai
 .Op Fl H Ar header
 .Op Fl P Ar port
 .Op Fl V Ar http version
@@ -30,28 +29,31 @@
 .Op Fl h Ar host
 .Op Fl p Ar prefix
 .Op Ar
+.Ek
 .Sh DESCRIPTION
 .Nm
-is an interactive processor to send HTTP requests.  It takes input on
-the command line: first it process the files given as argument, then
-reads the standard input.
-
+is an interactive processor to send HTTP requests.
+It takes input on the command line: first it process the files given
+as argument, then reads the standard input.
+.Pp
 Options available:
-.Bl -tag
+.Bl -tag -width 9n
 .It Fl A
 do not verify the authenticity of the peer's certificate.
 .It Fl i
 force interactive mode even if standard input is not a tty.
-.It Fl H
-set an extra HTTP header to include in the request.  Can be provided
-more than once.
-.It Fl P
-set the port.  It's only necessary to do this explicitly if you want to
-send the requests to a server listening on a non-standard port and you
-don't specify the port implicitly in the url or with a prefix.
-.It Fl V
-set the http version to use.  The possible values are:
-.Bl -tag
+.It Fl H Ar header
+set an extra HTTP header to include in the request.
+Can be provided more than once.
+.It Fl P Ar port
+set the port.
+It's only necessary to do this explicitly if you want to send the
+requests to a server listening on a non-standard port and you don't
+specify the port implicitly in the url or with a prefix.
+.It Fl V Ar http-version
+set the http version to use.
+The possible values are:
+.Bl -tag -width 3n
 .It 0
 for HTTP/1.0
 .It 1
@@ -65,17 +67,18 @@ for HTTP/3
 .It X
 for "I don't care about the version"
 .El
-
+.Pp
 Please note that
 .Nm
 can (and probably will) fall back to HTTP/1.1 if HTTP2 can't be
-negotiated.  This behavior is due to libcurl, see
+negotiated.
+This behavior is due to libcurl, see
 .Xr CURLOPT_HTTP_VERSION 3
 for more information.
-.It Fl c
-is a short-hand to declare the Content-Type header.  The possible
-values are:
-.Bl -tag
+.It Fl c Ar j | t | x
+is a short-hand to declare the Content-Type header.
+The possible values are:
+.Bl -tag -width 3n
 .It j
 for "Content-Type: application/json"
 .It t
@@ -83,12 +86,14 @@ for "Content-Type: text/plain"
 .It x
 for "Content-Type: application/xml"
 .El
-.It Fl h
+.It Fl h Ar host
 is a hort-hand for the "Host" header
-.It Fl p
-set the the prefix.  The prefix is a string that is appended
+.It Fl p Ar prefix
+set the the prefix.
+The prefix is a string that is appended
 .Sy before
-every url.  Will be guaranteed that
+every url.
+Will be guaranteed that
 .Sy only
 a slash will be present between the prefix and the url (i.e. if the
 prefix is localhost:8080/ and the url is /foo the final URL will be
@@ -96,73 +101,82 @@ localhost:8080/foo and not localhost:8080//foo)
 .El
 .Sh SYNTAX
 .Nm
-process its input line by line.  Empty lines are ignored, lines starting
-with a # are comments and thus ignored and every other line is a command.
+process its input line by line.
+Empty lines are ignored, lines starting with a # are comments and thus
+ignored and every other line is a command.
 Spaces and tabs are used to delimit commands and their arguments.
-
+.Pp
 The supported commands are:
-.Bl -tag
+.Bl -tag -width 12n
 .It Ic show Ar opt
-to show the value of an option.  See the section below for the list
-of options.
+to show the value of an option.
+See the section below for the list
+of options
 .It Ic set Ar opt Ar val
-to set the value of an option.  See the section below for the list
-of options.
+to set the value of an option.
+See the section below for the list of options
 .It Ic unset Ar opt
-unset an option.
+unset an option
 .It Ic add Ar header
 to add a custom header
 .It Ic del Ar header
 to delete a header previously added with
 .Ar add
-.It Ic quit Ns , Ic exit
-to exit.
-.It Ic help Ns , Ic usage
-to show a brief help.
-.It | Ns Ic cmd
+.It Ic quit , Ic exit
+to exit
+.It Ic help , Ic usage
+to show a brief help
+.It | Ic cmd
 where cmd is a
 .Xr sh 1
-command.  It will invoke the cmd in a shell binding its standard input
-to the body of the previously HTTP response.
-.It Em verb No Ic url Op Ar payload
-perform an HTTP request.
+command.
+It will invoke the cmd in a shell binding its standard input to the
+body of the previously HTTP response
+.It Em verb Ic url Op Ar payload
+perform an HTTP request
 .Em verb
 is one of
-.Ic delete Ns ,
-.Ic get Ns ,
-.Ic head Ns ,
+.Ic delete ,
+.Ic get ,
+.Ic head ,
 .Ic options No or
-.Ic post Ns .
+.Ic post .
 If the
 .Ic prefix
 is defined, the URL will be prefixed such that only a single slash will
-be present between the prefix and the given URL.  An optional payload
-can be provided and will be sended as-is.  Keep in mind that for some
-HTTP method the payload has not defined semantic (see RFC 7231.)
+be present between the prefix and the given URL.
+An optional payload can be provided and will be sended as-is.
+Keep in mind that for some HTTP method the payload has not defined
+semantic (see RFC 7231)
 .El
 .Sh OPTIONS
 The following options are available for the
-.Ic set Ns , Ic unset No and Ic show No commands:
-.Bl -tag
+.Ic set , Ic unset
+and
+.Ic show
+commands:
+.Bl -tag -width 12n
 .It Ic headers
-All the headers added.  Read only.
+All the headers added, read only.
 .It Ic useragent
 The value for the user agent.
 .It Ic prefix
 The prefix
 .It Ic http
-The HTTP version.  Accepted values are:
-.Bl -tag
+The HTTP version.
+Accepted values are:
+.Bl -tag -width 6n
 .It 1.0
 .It 1.1
 .It 2
 .It 2TLS
-means HTTP/2 only through TLS.  Can degrade to HTTP/1.1.  This is the
-default value.
+means HTTP/2 only through TLS.
+Can degrade to HTTP/1.1.
+This is the default value
 .It 3
-for HTTP/3.
+for HTTP/3
 .It none
-to let libcurl choose the version by itself.
+to let libcurl choose the version by itself
 .El
 .It Ic http-version
 Alias for
@@ -170,18 +184,23 @@ Alias for
 .It Ic port
 The port
 .It Ic peer-verification
-Enable or disable the verification of the peer certificate.  Accepted
-values are
+Enable or disable the verification of the peer certificate.
+Accepted values are
 .Ar on No or Ar true
 to enable it or
-.Ar off No or Ar false No to disable it.  Defaults to
-.Ar on Ns .
+.Ar off
+or
+.Ar false
+to disable it.
+Defaults to
+.Ar on .
 .El
 .Sh ENVIRONMENT
 The
 .Ev SHELL
 environment variable will be used to spawn commands for the pipe command.
-The shell must support a -c flag to execute a command.  If empty,
+The shell must support a -c flag to execute a command.
+If empty,
 .Pa /bin/sh
 will be assumed.
 .Sh EXAMPLES
@@ -195,7 +214,7 @@ crest() {
 	crest "$@" ~/crestrc
 }
 .Ed
-
+.sp
 Now
 .Pa ~/.crestrc
 will be executed before reading the input from the user, but after
@@ -209,16 +228,17 @@ parsing the flags.
 .It
 The headers and bodies of the responses will be passed through
 .Xr vis 3
-before they're printed to the user.  This is to ensure that no
+before they're printed to the user.
+This is to ensure that no
 .Dq funny
-sequences of character can mess up the user terminal.  If you want to
-obtain the raw body you can use the pipe command (i.e. |cat should print
-the last body as-is to standard output.)
+sequences of character can mess up the user terminal.
+If you want to obtain the raw body you can use the pipe command
+(i.e. |cat should print the last body as-is to standard output.)
 .El
 .Sh BUGS
 .Bl -bullet
 .It
 .Nm
-cannot handle responses bigger than 65'535 bytes.  This is a temporary
-limit.
+cannot handle responses bigger than 65'535 bytes.
+This is a temporary limit.
 .El

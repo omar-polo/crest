@@ -4,10 +4,10 @@ CREST(1) - General Commands Manual
 
 **crest** - Small repl to test REST endpoints
 
-# SYNOPSYS
+# SYNOPSIS
 
 **crest**
-\[**-i**]
+\[**-Ai**]
 \[**-H**&nbsp;*header*]
 \[**-P**&nbsp;*port*]
 \[**-V**&nbsp;*http&nbsp;version*]
@@ -19,30 +19,36 @@ CREST(1) - General Commands Manual
 # DESCRIPTION
 
 **crest**
-is an interactive processor to send HTTP requests.  It takes input on
-the command line: first it process the files given as argument, then
-reads the standard input.
+is an interactive processor to send HTTP requests.
+It takes input on the command line: first it process the files given
+as argument, then reads the standard input.
 
 Options available:
 
-**-i**
+**-A**
 
 > do not verify the authenticity of the peer's certificate.
 
-**-H**
+**-i**
 
-> set an extra HTTP header to include in the request.  Can be provided
-> more than once.
+> force interactive mode even if standard input is not a tty.
 
-**-P**
+**-H** *header*
 
-> set the port.  It's only necessary to do this explicitly if you want to
-> send the requests to a server listening on a non-standard port and you
-> don't specify the port implicitly in the url or with a prefix.
+> set an extra HTTP header to include in the request.
+> Can be provided more than once.
 
-**-V**
+**-P** *port*
 
-> set the http version to use.  The possible values are:
+> set the port.
+> It's only necessary to do this explicitly if you want to send the
+> requests to a server listening on a non-standard port and you don't
+> specify the port implicitly in the url or with a prefix.
+
+**-V** *http-version*
+
+> set the http version to use.
+> The possible values are:
 
 > 0
 
@@ -71,14 +77,15 @@ Options available:
 > Please note that
 > **crest**
 > can (and probably will) fall back to HTTP/1.1 if HTTP2 can't be
-> negotiated.  This behavior is due to libcurl, see
+> negotiated.
+> This behavior is due to libcurl, see
 > CURLOPT\_HTTP\_VERSION(3)
 > for more information.
 
-**-c**
+**-c** *j* | *t* | *x*
 
-> is a short-hand to declare the Content-Type header.  The possible
-> values are:
+> is a short-hand to declare the Content-Type header.
+> The possible values are:
 
 > j
 
@@ -92,15 +99,17 @@ Options available:
 
 > > for "Content-Type: application/xml"
 
-**-h**
+**-h** *host*
 
 > is a hort-hand for the "Host" header
 
-**-p**
+**-p** *prefix*
 
-> set the the prefix.  The prefix is a string that is appended
+> set the the prefix.
+> The prefix is a string that is appended
 > **before**
-> every url.  Will be guaranteed that
+> every url.
+> Will be guaranteed that
 > **only**
 > a slash will be present between the prefix and the url (i.e. if the
 > prefix is localhost:8080/ and the url is /foo the final URL will be
@@ -109,25 +118,27 @@ Options available:
 # SYNTAX
 
 **crest**
-process its input line by line.  Empty lines are ignored, lines starting
-with a # are comments and thus ignored and every other line is a command.
+process its input line by line.
+Empty lines are ignored, lines starting with a # are comments and thus
+ignored and every other line is a command.
 Spaces and tabs are used to delimit commands and their arguments.
 
 The supported commands are:
 
 **show** *opt*
 
-> to show the value of an option.  See the section below for the list
-> of options.
+> to show the value of an option.
+> See the section below for the list
+> of options
 
 **set** *opt* *val*
 
-> to set the value of an option.  See the section below for the list
-> of options.
+> to set the value of an option.
+> See the section below for the list of options
 
 **unset** *opt*
 
-> unset an option.
+> unset an option
 
 **add** *header*
 
@@ -140,22 +151,23 @@ The supported commands are:
 
 **quit**, **exit**
 
-> to exit.
+> to exit
 
 **help**, **usage**
 
-> to show a brief help.
+> to show a brief help
 
-|**cmd**
+| **cmd**
 
 > where cmd is a
 > sh(1)
-> command.  It will invoke the cmd in a shell binding its standard input
-> to the body of the previously HTTP response.
+> command.
+> It will invoke the cmd in a shell binding its standard input to the
+> body of the previously HTTP response
 
 *verb* **url** \[*payload*]
 
-> perform an HTTP request.
+> perform an HTTP request
 > *verb*
 > is one of
 > **delete**,
@@ -166,18 +178,22 @@ The supported commands are:
 > If the
 > **prefix**
 > is defined, the URL will be prefixed such that only a single slash will
-> be present between the prefix and the given URL.  An optional payload
-> can be provided and will be sended as-is.  Keep in mind that for some
-> HTTP method the payload has not defined semantic (see RFC 7231.)
+> be present between the prefix and the given URL.
+> An optional payload can be provided and will be sended as-is.
+> Keep in mind that for some HTTP method the payload has not defined
+> semantic (see RFC 7231)
 
 # OPTIONS
 
 The following options are available for the
-**set**, **unset** and **show** commands:
+**set**, **unset**
+and
+**show**
+commands:
 
 **headers**
 
-> All the headers added.  Read only.
+> All the headers added, read only.
 
 **useragent**
 
@@ -189,7 +205,8 @@ The following options are available for the
 
 **http**
 
-> The HTTP version.  Accepted values are:
+> The HTTP version.
+> Accepted values are:
 
 > 1\.0
 
@@ -199,16 +216,17 @@ The following options are available for the
 
 > 2TLS
 
-> > means HTTP/2 only through TLS.  Can degrade to HTTP/1.1.  This is the
-> > default value.
+> > means HTTP/2 only through TLS.
+> > Can degrade to HTTP/1.1.
+> > This is the default value
 
 > 3
 
-> > for HTTP/3.
+> > for HTTP/3
 
 > none
 
-> > to let libcurl choose the version by itself.
+> > to let libcurl choose the version by itself
 
 **http-version**
 
@@ -221,11 +239,15 @@ The following options are available for the
 
 **peer-verification**
 
-> Enable or disable the verification of the peer certificate.  Accepted
-> values are
+> Enable or disable the verification of the peer certificate.
+> Accepted values are
 > *on* or *true*
 > to enable it or
-> *off* or *false* to disable it. Defaults to
+> *off*
+> or
+> *false*
+> to disable it.
+> Defaults to
 > *on*.
 
 # ENVIRONMENT
@@ -233,7 +255,8 @@ The following options are available for the
 The
 `SHELL`
 environment variable will be used to spawn commands for the pipe command.
-The shell must support a -c flag to execute a command.  If empty,
+The shell must support a -c flag to execute a command.
+If empty,
 */bin/sh*
 will be assumed.
 
@@ -266,16 +289,17 @@ Omar Polo &lt;op@xglobe.in&gt;
 
 *	The headers and bodies of the responses will be passed through
 	vis(3)
-	before they're printed to the user.  This is to ensure that no
+	before they're printed to the user.
+	This is to ensure that no
 	"funny"
-	sequences of character can mess up the user terminal.  If you want to
-	obtain the raw body you can use the pipe command (i.e. |cat should print
-	the last body as-is to standard output.)
+	sequences of character can mess up the user terminal.
+	If you want to obtain the raw body you can use the pipe command
+	(i.e. |cat should print the last body as-is to standard output.)
 
 # BUGS
 
 *	**crest**
-	cannot handle responses bigger than 65'535 bytes.  This is a temporary
-	limit.
+	cannot handle responses bigger than 65'535 bytes.
+	This is a temporary limit.
 
-Void Linux - October 24, 2019
+OpenBSD 6.7 - July 15, 2020
