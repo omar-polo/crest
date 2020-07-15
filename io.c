@@ -78,6 +78,12 @@ rlf(const char *prompt, FILE *in)
 {
 	if (isatty(fileno(in)))
 		return rl(prompt);
+
+	if (force_interactive) {
+		fprintf(in, "%s", prompt);
+		fflush(in);
+	}
+
 	return sgl(in);
 }
 

@@ -21,6 +21,7 @@
 .Sh SYNOPSYS
 .Nm
 .Bk -words
+.Op Fl A
 .Op Fl i
 .Op Fl H Ar header
 .Op Fl P Ar port
@@ -37,8 +38,10 @@ reads the standard input.
 
 Options available:
 .Bl -tag
-.It Fl i
+.It Fl A
 do not verify the authenticity of the peer's certificate.
+.It Fl i
+force interactive mode even if standard input is not a tty.
 .It Fl H
 set an extra HTTP header to include in the request.  Can be provided
 more than once.

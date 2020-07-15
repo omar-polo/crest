@@ -188,6 +188,7 @@ struct settings {
 extern struct settings settings;
 extern const char *prgname;
 extern const char *prompt;
+extern int force_interactive;
 
 /* parse-related stuff */
 const char	*method2str(enum http_methods);

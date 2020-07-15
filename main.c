@@ -29,6 +29,7 @@
 
 const char *prgname;
 const char *prompt;
+int force_interactive;
 
 static void
 usage()
@@ -70,8 +71,13 @@ main(int argc, char **argv)
 	close(imsg_fds[1]);
 	imsg_init(&ibuf, imsg_fds[0]);
 
-	while ((ch = getopt(argc, argv, "iH:P:V:c:h:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "AiH:P:V:c:h:p:")) != -1) {
 		switch (ch) {
+		case 'A':
+			csend(&ibuf, IMSG_SET_PEER_VERIF, &(int) { 1 },
+			    sizeof(int));
+			break;
+
 		case 'H':
 			csend(&ibuf, IMSG_ADD, optarg, strlen(optarg));
 			break;
@@ -159,8 +165,7 @@ main(int argc, char **argv)
 		}
 
 		case 'i':
-			csend(&ibuf, IMSG_SET_PEER_VERIF, &(int) { 1 },
-				sizeof(int));
+			force_interactive = 1;
 			break;
 
 		case 'p': {
