@@ -60,7 +60,7 @@ complex json.)
 ### Building
 
 Make sure you have `libcurl` installed (you may need a package called
-libcurl-dev or libcurl-devel), that's the only dependency.
+libcurl-dev, libcurl-devel or curl-dev), that's the only dependency.
 
 To build the project you'll need `meson`:
 
