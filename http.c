@@ -14,12 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "crest.h"
+
 #include <curl/curl.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "crest.h"
 
 struct write_result {
 	char *data;

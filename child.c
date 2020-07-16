@@ -14,11 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "crest.h"
+
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "crest.h"
 
 struct svec *headers;
 #define HPUSH(h, v, d)                                                       \

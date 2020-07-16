@@ -1,0 +1,64 @@
+#ifndef CREST_CONFIG_H
+#define CREST_CONFIG_H
+
+#include <sys/types.h>
+#include <sys/uio.h>
+
+#include <stdint.h>
+#include <stdlib.h>
+
+#mesondefine HAVE_FREEZERO
+#mesondefine HAVE_GETDTABLECOUNT
+#mesondefine HAVE_IMSG
+#mesondefine HAVE_QUEUE_H
+#mesondefine HAVE_READLINE
+#mesondefine HAVE_RECALLOCARRAY
+#mesondefine HAVE_STRTONUM
+#mesondefine HAVE_U_CHAR
+#mesondefine HAVE_VIS_H
+
+#if ! HAVE_U_CHAR
+typedef uint8_t u_char;
+#endif
+
+#ifndef __OpenBSD__
+# define pledge(s, p) (0)
+# define unveil(s, p) (0)
+#endif
+
+#if ! HAVE_GETDTABLECOUNT
+int	getdtablecount(void);
+#endif
+
+#if ! HAVE_FREEZERO
+void	freezero(void*, size_t);
+#endif
+
+/* needs to be before imsg */
+#if HAVE_QUEUE_H
+# include <sys/queue.h>
+#else
+# include "compat/queue.h"
+#endif
+
+#if ! HAVE_RECALLOCARRAY
+void	*recallocarray(void*, size_t, size_t, size_t);
+#endif
+
+#if HAVE_IMSG
+# include <imsg.h>
+#else
+# include "compat/imsg.h"
+#endif
+
+#if ! HAVE_STRTONUM
+long long	strtonum(const char*, long long, long long, const char**);
+#endif
+
+#if HAV_VIS_H
+# include <vis.h>
+#else
+# include "compat/vis.h"
+#endif
+
+#endif /* CREST_CONFIG_H */

@@ -17,11 +17,10 @@
 #ifndef CREST_H
 #define CREST_H
 
+#include "config.h"
+
 #include <curl/curl.h>
 #include <sys/types.h>
-
-#include "compat/compat.h"
-#include <imsg.h>
 
 enum imsg_type {
 

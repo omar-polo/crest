@@ -14,11 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "crest.h"
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "crest.h"
 
 static struct svec *
 svec_new()

@@ -62,17 +62,19 @@ complex json.)
 Make sure you have `libcurl` installed (you may need a package called
 libcurl-dev or libcurl-devel), that's the only dependency.
 
-To build the project you only need `make(1)`.  Both GNU make and BSD
-make were tested.
+To build the project you'll need `meson`:
 
-To install, execute `make install`.  The binary will be placed at
-`${PREFIX}/bin`, with `${PREFIX}` being `/usr/local/` by default.
-The manpage will be installed at `${PREFIX}/man/man1`.
+	meson build
+	cd build
+	ninja
+	ninja install # optional
 
-To uninstall, execute `make uninstall` or simply remove the binary and
-the manpage.  No other files will be installed.
+or more simply:
 
-The makefile will honor `${PREFIX}` and `${DESTDIR}`.
+	meson install
+
+The install target will add only two files to your system: `crest`
+(the executable) and `crest.1` (the man page.)
 
 ### Architecture
 

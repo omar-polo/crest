@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "imsg.h"
+#include "config.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -27,8 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "compat.h"
 
 int imsg_fd_overhead = 0;
 

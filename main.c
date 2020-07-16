@@ -16,6 +16,8 @@
 
 #include <sys/wait.h>
 
+#include "crest.h"
+
 #include <curl/curl.h>
 #include <err.h>
 #include <errno.h>
@@ -24,8 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "crest.h"
 
 const char *prgname;
 const char *prompt;

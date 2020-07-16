@@ -14,14 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "crest.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "crest.h"
 
 /* used to return the address in parse_set */
 static long curl_http_versions[] = {

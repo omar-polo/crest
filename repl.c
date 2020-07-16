@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "crest.h"
+
 #include <sys/wait.h>
 
 #include <err.h>
@@ -22,9 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "compat.h"
-#include "crest.h"
 
 static void
 help()
