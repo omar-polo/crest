@@ -40,7 +40,7 @@ sgl(FILE *in)
 	return line;
 }
 
-#ifdef HAVE_READLINE
+#if HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
 char *
