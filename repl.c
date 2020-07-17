@@ -136,7 +136,7 @@ recv_into(struct imsgbuf *ibuf, struct resp *r)
 	if ((n = imsg_get(ibuf, &imsg)) == -1)
 		err(1, "imsg_get");
 	if (n == 0)
-		errx(1, "no messages");
+		return 0;
 
 	n = imsg.hdr.len - IMSG_HEADER_SIZE;
 	rtype = imsg.hdr.type;
