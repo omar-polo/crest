@@ -134,7 +134,8 @@ static int
 process_messages(struct imsgbuf *ibuf, struct req *req)
 {
 	struct imsg imsg;
-	ssize_t n, datalen;
+	ssize_t n;
+	size_t datalen;
 	int done;
 
 	poll_read(ibuf->fd);

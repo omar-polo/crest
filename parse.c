@@ -374,8 +374,8 @@ parse_req(const char *i, struct cmd *cmd)
 	 *	{GET|POST|...} url payload?
 	 */
 
-	int c, j, k, v;
-	size_t l;
+	int c, j, v;
+	size_t k, l;
 	const char *t;
 	const char *methods[] = { "connect", "delete", "get", "head",
 		"options", "patch", "post", "put", "trace" };
