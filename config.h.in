@@ -61,4 +61,13 @@ long long	strtonum(const char*, long long, long long, const char**);
 # include "compat/vis.h"
 #endif
 
+#if HAVE_ERR
+# include <err.h>
+#else
+void	err(int, const char*, ...);
+void	errx(int, const char*, ...);
+void	warn(const char*, ...);
+void	warnx(const char*, ...);
+#endif
+
 #endif /* CREST_CONFIG_H */

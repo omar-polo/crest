@@ -44,7 +44,11 @@ main(int argc, char **argv)
 	int ch, imsg_fds[2], i;
 	struct imsgbuf ibuf, child_ibuf;
 
-	prgname = *argv;
+	if (argc > 0)
+		prgname = argv[0];
+	else
+		prgname = "crest";
+
 	prompt = "> ";
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, imsg_fds) == -1)

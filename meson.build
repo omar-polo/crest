@@ -71,6 +71,13 @@ else
 	conf.set('HAVE_QUEUE_H', 1)
 endif
 
+if not cc.has_function('err')
+	src += 'compat/err.c'
+	conf.set('HAVE_ERR', 0)
+else
+	conf.set('HAVE_ERR', 1)
+endif
+
 configure_file(
 	input         : 'config.h.in',
 	output        : 'config.h',
