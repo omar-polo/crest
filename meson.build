@@ -20,7 +20,7 @@ else
 	conf.set('HAVE_READLINE', 0)
 endif
 
-conf.set10('HAVE_U_CHAR', cc.has_type('u_char'))
+conf.set10('HAVE_U_CHAR', cc.has_type('u_char', prefix : '#include <sys/types.h>'))
 
 if not cc.has_function('getdtablecount')
 	src += 'compat/getdtablecount.c'
