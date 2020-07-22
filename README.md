@@ -76,6 +76,12 @@ or more simply:
 The install target will add only two files to your system: `crest`
 (the executable) and `crest.1` (the man page.)
 
+### Integrations
+
+ - emacs: there is a mode that lets you run crest directly from emacs.
+   You can find the sources in the `crest4e` directory.
+ - acme: `crest` works great within `win`.
+
 ### Architecture
 
 `crest` will `fork(2)` as soon as it can: the parent process will do
